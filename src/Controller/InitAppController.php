@@ -66,20 +66,24 @@ class InitAppController extends AbstractController
                 'AdminHomepage',
                 'Users',
                 'Organizations',
+                'Services'
             ]);
 
             $add = array_merge($add, [
                 'Users',
                 'Organizations',
+                'Services'
             ]);
 
             $update = array_merge($update, [
                 'Users',
                 'Organizations',
+                'Services'
             ]);
 
             $toggle = array_merge($toggle, [
                 'Users',
+                'Services'
             ]);
         }
 

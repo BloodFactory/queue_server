@@ -70,7 +70,7 @@ class Service
     private ?Organization $organization;
 
     /**
-     * @ORM\Column(type="boolean", options={"default": 1})
+     * @ORM\Column(type="boolean", options={"default": 1 })
      */
     private bool $isActive = true;
 
