@@ -257,9 +257,9 @@
     </schema>
     <schema id="48" parent="12" name="dbo">
       <ObjectId>1</ObjectId>
-      <IntrospectionTimestamp>2021-03-22.14:30:43</IntrospectionTimestamp>
+      <IntrospectionTimestamp>2021-03-29.19:37:40.080</IntrospectionTimestamp>
       <Current>1</Current>
-      <DescriptionsCheckSum>878817149</DescriptionsCheckSum>
+      <DescriptionsCheckSum>936194123</DescriptionsCheckSum>
     </schema>
     <schema id="49" parent="12" name="guest">
       <ObjectId>2</ObjectId>
@@ -346,234 +346,365 @@
       <AuthType>none</AuthType>
     </role>
     <table id="65" parent="48" name="doctrine_migration_versions">
-      <ObjectId>1845581613</ObjectId>
-      <CreatedTimestamp>2021-03-19.17:55:54.543</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.17:55:54.543</ModifiedTimestamp>
+      <ObjectId>210099789</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.477</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.477</ModifiedTimestamp>
     </table>
     <table id="66" parent="48" name="organization">
-      <ObjectId>1989582126</ObjectId>
-      <Outdated>1</Outdated>
-      <CreatedTimestamp>2021-03-22.14:30:38.960</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-22.14:30:38.970</ModifiedTimestamp>
+      <ObjectId>242099903</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.620</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.643</ModifiedTimestamp>
     </table>
     <table id="67" parent="48" name="refresh_tokens">
-      <ObjectId>1877581727</ObjectId>
-      <CreatedTimestamp>2021-03-19.17:55:54.690</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.17:55:54.693</ModifiedTimestamp>
+      <ObjectId>274100017</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.623</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.627</ModifiedTimestamp>
     </table>
-    <table id="68" parent="48" name="user_data">
-      <ObjectId>1941581955</ObjectId>
-      <CreatedTimestamp>2021-03-19.18:38:56.547</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.18:38:56.557</ModifiedTimestamp>
+    <table id="68" parent="48" name="service">
+      <ObjectId>306100131</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.627</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.640</ModifiedTimestamp>
     </table>
-    <table id="69" parent="48" name="usr">
-      <ObjectId>1909581841</ObjectId>
-      <Outdated>1</Outdated>
-      <CreatedTimestamp>2021-03-19.17:55:54.697</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.18:38:56.577</ModifiedTimestamp>
+    <table id="69" parent="48" name="user_data">
+      <ObjectId>354100302</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.633</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.640</ModifiedTimestamp>
     </table>
-    <column id="70" parent="65" name="version">
+    <table id="70" parent="48" name="usr">
+      <ObjectId>386100416</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.633</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.653</ModifiedTimestamp>
+    </table>
+    <column id="71" parent="65" name="version">
       <Position>1</Position>
       <DataType>nvarchar(191 char)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="71" parent="65" name="executed_at">
+    <column id="72" parent="65" name="executed_at">
       <Position>2</Position>
       <DataType>datetime2(6 digit)|0s</DataType>
     </column>
-    <column id="72" parent="65" name="execution_time">
+    <column id="73" parent="65" name="execution_time">
       <Position>3</Position>
       <DataType>int|0s</DataType>
     </column>
-    <index id="73" parent="65" name="PK__doctrine__79B5C94C4ABDBAE4">
+    <index id="74" parent="65" name="PK__doctrine__79B5C94CBC9F09B4">
       <Position>1</Position>
       <NameSurrogate>1</NameSurrogate>
       <ColNames>version</ColNames>
       <Clustering>1</Clustering>
       <Unique>1</Unique>
     </index>
-    <key id="74" parent="65" name="PK__doctrine__79B5C94C4ABDBAE4">
-      <ObjectId>1861581670</ObjectId>
+    <key id="75" parent="65" name="PK__doctrine__79B5C94CBC9F09B4">
+      <ObjectId>226099846</ObjectId>
       <NameSurrogate>1</NameSurrogate>
-      <CreatedTimestamp>2021-03-19.17:55:54.547</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.17:55:54.547</ModifiedTimestamp>
+      <CreatedTimestamp>2021-03-29.19:37:26.487</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.487</ModifiedTimestamp>
       <ColNames>version</ColNames>
-      <UnderlyingIndexName>PK__doctrine__79B5C94C4ABDBAE4</UnderlyingIndexName>
+      <UnderlyingIndexName>PK__doctrine__79B5C94CBC9F09B4</UnderlyingIndexName>
       <Primary>1</Primary>
     </key>
-    <column id="75" parent="66" name="id">
+    <column id="76" parent="66" name="id">
       <Position>1</Position>
       <SequenceIdentity>1</SequenceIdentity>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="76" parent="66" name="name">
+    <column id="77" parent="66" name="name">
       <Position>2</Position>
       <DataType>nvarchar(4000 char)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <index id="77" parent="66" name="PK__organiza__3213E83F98C676D7">
+    <index id="78" parent="66" name="PK__organiza__3213E83F42ECC863">
       <Position>1</Position>
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Clustering>1</Clustering>
       <Unique>1</Unique>
     </index>
-    <index id="78" parent="66" name="name_idx">
+    <index id="79" parent="66" name="name_idx">
       <Position>2</Position>
       <ColNames>name</ColNames>
     </index>
-    <key id="79" parent="66" name="PK__organiza__3213E83F98C676D7">
-      <ObjectId>2005582183</ObjectId>
+    <key id="80" parent="66" name="PK__organiza__3213E83F42ECC863">
+      <ObjectId>258099960</ObjectId>
       <NameSurrogate>1</NameSurrogate>
-      <CreatedTimestamp>2021-03-22.14:30:38.967</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-22.14:30:38.967</ModifiedTimestamp>
+      <CreatedTimestamp>2021-03-29.19:37:26.623</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.623</ModifiedTimestamp>
       <ColNames>id</ColNames>
-      <UnderlyingIndexName>PK__organiza__3213E83F98C676D7</UnderlyingIndexName>
+      <UnderlyingIndexName>PK__organiza__3213E83F42ECC863</UnderlyingIndexName>
       <Primary>1</Primary>
     </key>
-    <column id="80" parent="67" name="id">
+    <column id="81" parent="67" name="id">
       <Position>1</Position>
       <SequenceIdentity>1</SequenceIdentity>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="81" parent="67" name="refresh_token">
+    <column id="82" parent="67" name="refresh_token">
       <Position>2</Position>
       <DataType>nvarchar(128 char)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="82" parent="67" name="username">
+    <column id="83" parent="67" name="username">
       <Position>3</Position>
       <DataType>nvarchar(255 char)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="83" parent="67" name="valid">
+    <column id="84" parent="67" name="valid">
       <Position>4</Position>
       <DataType>datetime2(6 digit)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <index id="84" parent="67" name="PK__refresh___3213E83F5A78ABC1">
+    <index id="85" parent="67" name="PK__refresh___3213E83F027BBB36">
       <Position>1</Position>
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Clustering>1</Clustering>
       <Unique>1</Unique>
     </index>
-    <index id="85" parent="67" name="UNIQ_9BACE7E1C74F2195">
+    <index id="86" parent="67" name="UNIQ_9BACE7E1C74F2195">
       <Position>2</Position>
       <ColNames>refresh_token</ColNames>
       <Unique>1</Unique>
       <Condition>[refresh_token] IS NOT NULL</Condition>
     </index>
-    <key id="86" parent="67" name="PK__refresh___3213E83F5A78ABC1">
-      <ObjectId>1893581784</ObjectId>
+    <key id="87" parent="67" name="PK__refresh___3213E83F027BBB36">
+      <ObjectId>290100074</ObjectId>
       <NameSurrogate>1</NameSurrogate>
-      <CreatedTimestamp>2021-03-19.17:55:54.690</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.17:55:54.690</ModifiedTimestamp>
+      <CreatedTimestamp>2021-03-29.19:37:26.627</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.627</ModifiedTimestamp>
       <ColNames>id</ColNames>
-      <UnderlyingIndexName>PK__refresh___3213E83F5A78ABC1</UnderlyingIndexName>
+      <UnderlyingIndexName>PK__refresh___3213E83F027BBB36</UnderlyingIndexName>
       <Primary>1</Primary>
     </key>
-    <column id="87" parent="68" name="id">
+    <column id="88" parent="68" name="id">
       <Position>1</Position>
       <SequenceIdentity>1</SequenceIdentity>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="88" parent="68" name="last_name">
+    <column id="89" parent="68" name="organization_id">
       <Position>2</Position>
-      <DataType>nvarchar(50 char)|0s</DataType>
+      <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="89" parent="68" name="first_name">
+    <column id="90" parent="68" name="name">
       <Position>3</Position>
-      <DataType>nvarchar(50 char)|0s</DataType>
+      <DataType>nvarchar(255 char)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="90" parent="68" name="middle_name">
+    <column id="91" parent="68" name="days">
       <Position>4</Position>
-      <DataType>nvarchar(50 char)|0s</DataType>
+      <Comment>(DC2Type:array)</Comment>
+      <DataType>varchar(max)|0s</DataType>
+      <NotNull>1</NotNull>
     </column>
-    <index id="91" parent="68" name="PK__user_dat__3213E83F6506F7DD">
+    <column id="92" parent="68" name="reception_time_from">
+      <Position>5</Position>
+      <DataType>time(0 digit)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="93" parent="68" name="reception_time_till">
+      <Position>6</Position>
+      <DataType>time(0 digit)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="94" parent="68" name="rest_time_from">
+      <Position>7</Position>
+      <DataType>time(0 digit)|0s</DataType>
+    </column>
+    <column id="95" parent="68" name="rest_time_till">
+      <Position>8</Position>
+      <DataType>time(0 digit)|0s</DataType>
+    </column>
+    <column id="96" parent="68" name="duration">
+      <Position>9</Position>
+      <DataType>smallint|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="97" parent="68" name="rest">
+      <Position>10</Position>
+      <DataType>smallint|0s</DataType>
+    </column>
+    <column id="98" parent="68" name="persons">
+      <Position>11</Position>
+      <DataType>smallint|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="99" parent="68" name="is_active">
+      <Position>12</Position>
+      <DefaultConstraintName>DF_E19D9AD2_1B5771DD</DefaultConstraintName>
+      <DefaultExpression>&apos;1&apos;</DefaultExpression>
+      <DataType>bit|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <index id="100" parent="68" name="PK__service__3213E83FC9342D41">
       <Position>1</Position>
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Clustering>1</Clustering>
       <Unique>1</Unique>
     </index>
-    <key id="92" parent="68" name="PK__user_dat__3213E83F6506F7DD">
-      <ObjectId>1957582012</ObjectId>
+    <index id="101" parent="68" name="IDX_E19D9AD232C8A3DE">
+      <Position>2</Position>
+      <ColNames>organization_id</ColNames>
+    </index>
+    <key id="102" parent="68" name="PK__service__3213E83FC9342D41">
+      <ObjectId>322100188</ObjectId>
       <NameSurrogate>1</NameSurrogate>
-      <CreatedTimestamp>2021-03-19.18:38:56.547</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.18:38:56.547</ModifiedTimestamp>
+      <CreatedTimestamp>2021-03-29.19:37:26.627</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.627</ModifiedTimestamp>
       <ColNames>id</ColNames>
-      <UnderlyingIndexName>PK__user_dat__3213E83F6506F7DD</UnderlyingIndexName>
+      <UnderlyingIndexName>PK__service__3213E83FC9342D41</UnderlyingIndexName>
       <Primary>1</Primary>
     </key>
-    <column id="93" parent="69" name="id">
+    <foreign-key id="103" parent="68" name="FK_E19D9AD232C8A3DE">
+      <ObjectId>434100587</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.640</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.640</ModifiedTimestamp>
+      <ColNames>organization_id</ColNames>
+      <RefTableId>242099903</RefTableId>
+      <RefTableName>organization</RefTableName>
+      <RefKeyName>PK__organiza__3213E83F42ECC863</RefKeyName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <default id="104" parent="68" name="DF_E19D9AD2_1B5771DD">
+      <ObjectId>338100245</ObjectId>
+      <ModifiedTimestamp>2021-03-29.19:37:26.630</ModifiedTimestamp>
+      <ColNames>is_active</ColNames>
+      <DefaultExpression>&apos;1&apos;</DefaultExpression>
+    </default>
+    <column id="105" parent="69" name="id">
       <Position>1</Position>
       <SequenceIdentity>1</SequenceIdentity>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="94" parent="69" name="username">
+    <column id="106" parent="69" name="last_name">
       <Position>2</Position>
+      <DataType>nvarchar(50 char)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="107" parent="69" name="first_name">
+      <Position>3</Position>
+      <DataType>nvarchar(50 char)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="108" parent="69" name="middle_name">
+      <Position>4</Position>
+      <DataType>nvarchar(50 char)|0s</DataType>
+    </column>
+    <index id="109" parent="69" name="PK__user_dat__3213E83F5078E857">
+      <Position>1</Position>
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>id</ColNames>
+      <Clustering>1</Clustering>
+      <Unique>1</Unique>
+    </index>
+    <key id="110" parent="69" name="PK__user_dat__3213E83F5078E857">
+      <ObjectId>370100359</ObjectId>
+      <NameSurrogate>1</NameSurrogate>
+      <CreatedTimestamp>2021-03-29.19:37:26.633</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.633</ModifiedTimestamp>
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>PK__user_dat__3213E83F5078E857</UnderlyingIndexName>
+      <Primary>1</Primary>
+    </key>
+    <column id="111" parent="70" name="id">
+      <Position>1</Position>
+      <SequenceIdentity>1</SequenceIdentity>
+      <DataType>int|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="112" parent="70" name="user_data_id">
+      <Position>2</Position>
+      <DataType>int|0s</DataType>
+    </column>
+    <column id="113" parent="70" name="organization_id">
+      <Position>3</Position>
+      <DataType>int|0s</DataType>
+    </column>
+    <column id="114" parent="70" name="username">
+      <Position>4</Position>
       <DataType>nvarchar(180 char)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="95" parent="69" name="roles">
-      <Position>3</Position>
+    <column id="115" parent="70" name="roles">
+      <Position>5</Position>
       <Comment>(DC2Type:json)</Comment>
       <DataType>varchar(max)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="96" parent="69" name="password">
-      <Position>4</Position>
+    <column id="116" parent="70" name="password">
+      <Position>6</Position>
       <DataType>nvarchar(255 char)|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="97" parent="69" name="user_data_id">
-      <Position>5</Position>
-      <DataType>int|0s</DataType>
+    <column id="117" parent="70" name="is_active">
+      <Position>7</Position>
+      <DefaultConstraintName>DF_1762498C_1B5771DD</DefaultConstraintName>
+      <DefaultExpression>&apos;1&apos;</DefaultExpression>
+      <DataType>bit|0s</DataType>
+      <NotNull>1</NotNull>
     </column>
-    <index id="98" parent="69" name="PK__usr__3213E83F19091F1F">
+    <index id="118" parent="70" name="PK__usr__3213E83F67C8B033">
       <Position>1</Position>
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id</ColNames>
       <Clustering>1</Clustering>
       <Unique>1</Unique>
     </index>
-    <index id="99" parent="69" name="UNIQ_1762498CF85E0677">
+    <index id="119" parent="70" name="UNIQ_1762498CF85E0677">
       <Position>2</Position>
       <ColNames>username</ColNames>
       <Unique>1</Unique>
       <Condition>[username] IS NOT NULL</Condition>
     </index>
-    <index id="100" parent="69" name="UNIQ_1762498C6FF8BF36">
-      <Position>4</Position>
+    <index id="120" parent="70" name="UNIQ_1762498C6FF8BF36">
+      <Position>3</Position>
       <ColNames>user_data_id</ColNames>
       <Unique>1</Unique>
       <Condition>[user_data_id] IS NOT NULL</Condition>
     </index>
-    <key id="101" parent="69" name="PK__usr__3213E83F19091F1F">
-      <ObjectId>1925581898</ObjectId>
+    <index id="121" parent="70" name="IDX_1762498C32C8A3DE">
+      <Position>4</Position>
+      <ColNames>organization_id</ColNames>
+    </index>
+    <key id="122" parent="70" name="PK__usr__3213E83F67C8B033">
+      <ObjectId>402100473</ObjectId>
       <NameSurrogate>1</NameSurrogate>
-      <CreatedTimestamp>2021-03-19.17:55:54.697</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.17:55:54.697</ModifiedTimestamp>
+      <CreatedTimestamp>2021-03-29.19:37:26.633</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.633</ModifiedTimestamp>
       <ColNames>id</ColNames>
-      <UnderlyingIndexName>PK__usr__3213E83F19091F1F</UnderlyingIndexName>
+      <UnderlyingIndexName>PK__usr__3213E83F67C8B033</UnderlyingIndexName>
       <Primary>1</Primary>
     </key>
-    <foreign-key id="102" parent="69" name="FK_1762498C6FF8BF36">
-      <ObjectId>1973582069</ObjectId>
-      <CreatedTimestamp>2021-03-19.18:38:56.557</CreatedTimestamp>
-      <ModifiedTimestamp>2021-03-19.18:38:56.557</ModifiedTimestamp>
+    <foreign-key id="123" parent="70" name="FK_1762498C6FF8BF36">
+      <ObjectId>450100644</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.640</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.640</ModifiedTimestamp>
       <ColNames>user_data_id</ColNames>
-      <RefTableId>1941581955</RefTableId>
+      <RefTableId>354100302</RefTableId>
       <RefTableName>user_data</RefTableName>
-      <RefKeyName>PK__user_dat__3213E83F6506F7DD</RefKeyName>
+      <RefKeyName>PK__user_dat__3213E83F5078E857</RefKeyName>
       <RefColNames>id</RefColNames>
     </foreign-key>
+    <foreign-key id="124" parent="70" name="FK_1762498C32C8A3DE">
+      <ObjectId>466100701</ObjectId>
+      <CreatedTimestamp>2021-03-29.19:37:26.640</CreatedTimestamp>
+      <ModifiedTimestamp>2021-03-29.19:37:26.640</ModifiedTimestamp>
+      <ColNames>organization_id</ColNames>
+      <RefTableId>242099903</RefTableId>
+      <RefTableName>organization</RefTableName>
+      <RefKeyName>PK__organiza__3213E83F42ECC863</RefKeyName>
+      <RefColNames>id</RefColNames>
+    </foreign-key>
+    <default id="125" parent="70" name="DF_1762498C_1B5771DD">
+      <ObjectId>418100530</ObjectId>
+      <ModifiedTimestamp>2021-03-29.19:37:26.637</ModifiedTimestamp>
+      <ColNames>is_active</ColNames>
+      <DefaultExpression>&apos;1&apos;</DefaultExpression>
+    </default>
   </database-model>
 </dataSource>

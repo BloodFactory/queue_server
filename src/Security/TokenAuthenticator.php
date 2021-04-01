@@ -7,7 +7,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 class TokenAuthenticator extends JWTTokenAuthenticator
 {
-    public function checkCredentials($credentials, UserInterface $user)
+    public function checkCredentials($credentials, UserInterface $user): bool
     {
         return $user->getIsActive();
     }

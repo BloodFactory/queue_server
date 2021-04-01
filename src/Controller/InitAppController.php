@@ -45,27 +45,41 @@ class InitAppController extends AbstractController
                 'ClientHomepage',
                 'Settings'
             ]);
+            $add = array_merge($add, [
+                'Settings',
+            ]);
+            $update = array_merge($update, [
+                'Settings',
+            ]);
+
+            $toggle = array_merge($toggle, [
+                'Settings',
+            ]);
+
+            $delete = array_merge($delete, [
+                'Settings'
+            ]);
         }
 
         if ($this->isGranted('ROLE_ADMIN')) {
             $open = array_merge($open, [
                 'AdminHomepage',
                 'Users',
-                'Organizations'
+                'Organizations',
             ]);
 
             $add = array_merge($add, [
                 'Users',
-                'Organizations'
+                'Organizations',
             ]);
 
             $update = array_merge($update, [
                 'Users',
-                'Organizations'
+                'Organizations',
             ]);
 
             $toggle = array_merge($toggle, [
-                'Users'
+                'Users',
             ]);
         }
 

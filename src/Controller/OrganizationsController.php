@@ -18,29 +18,6 @@ use Symfony\Component\Routing\Annotation\Route;
 class OrganizationsController extends AbstractController
 {
     /**
-     * @Route("/list")
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function fetchDictionary(Request $request): JsonResponse
-    {
-        $search = $request->query->get('filter');
-
-        $organizations = $this->getDoctrine()->getRepository(Organization::class)->fetchDictionary($search);
-
-        $response = [];
-
-        foreach ($organizations as $organization) {
-            $response[] = [
-                'value' => $organization->getId(),
-                'label' => $organization->getName()
-            ];
-        }
-
-        return $this->json($response);
-    }
-
-    /**
      * @Route("", methods={"GET"})
      * @IsGranted("ROLE_ADMIN")
      * @return JsonResponse

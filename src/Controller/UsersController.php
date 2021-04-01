@@ -66,16 +66,15 @@ class UsersController extends AbstractController
      * @Route("", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param UserPasswordEncoderInterface $passwordEncoder
      * @return JsonResponse
      */
-    public function add(Request $request, UserPasswordEncoderInterface $passwordEncoder): JsonResponse
+    public function add(Request $request): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
             $this->saveUser($data);
         } catch (Throwable $e) {
-            return $this->json([], Response::HTTP_BAD_REQUEST);
+            return $this->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
         return $this->json([]);
     }
@@ -88,12 +87,12 @@ class UsersController extends AbstractController
     private function saveUser(array $data, ?int $id = null): void
     {
         $user = $id ? $this->getDoctrine()->getRepository(User::class)->find($id) : new User();
+
         if (!$userData = $user->getUserData()) {
             $userData = new UserData();
             $user->setUserData($userData);
         }
 
-        $userData = $user->getUserData() ?? new UserData();
         if (empty($data['username'])) throw new Exception();
         if (empty($data['organization'])) throw new Exception();
         if (empty($data['userData']['lastName'])) throw new Exception();

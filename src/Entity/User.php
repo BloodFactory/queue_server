@@ -46,9 +46,14 @@ class User implements UserInterface
     private ?Organization $organization;
 
     /**
-     * @ORM\Column(type="boolean")
+     * @ORM\Column(type="boolean", options={"default": 1})
      */
     private bool $isActive = true;
+
+    public function __construct()
+    {
+        $this->userData = null;
+    }
 
     public function getId(): ?int
     {

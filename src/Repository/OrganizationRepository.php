@@ -19,11 +19,9 @@ class OrganizationRepository extends ServiceEntityRepository
         parent::__construct($registry, Organization::class);
     }
 
-    public function fetchDictionary(string $search = ''): array
+    public function fetchDictionary(): array
     {
-        $qb = $this->createQueryBuilder('o')
-                   ->andWhere('o.name LIKE :search')
-                   ->setParameter('search', $search . '%');
+        $qb = $this->createQueryBuilder('o');
 
         return $qb->getQuery()->getResult();
     }
