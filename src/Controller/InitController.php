@@ -5,29 +5,23 @@ namespace App\Controller;
 use App\Entity\User;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class InitAppController extends AbstractController
+class InitController extends AbstractController
 {
     /**
      * @Route("/init", methods={"GET"})
      * @IsGranted("ROLE_USER")
-     * @return JsonResponse
+     * @return Response
      */
-    public function index(): JsonResponse
+    public function init(): Response
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        $userData = $user->getUserData();
-
         return $this->json([
-            'user' => [
-                'lastName' => $userData ? $userData->getLastName() : '',
-                'firstName' => $userData ? $userData->getFirstName() : '',
-                'middleName' => $userData ? $userData->getMiddleName() ?? '' : ''
-            ],
+            'user' => $user->getUsername(),
             'ability' => $this->getAbilities()
         ]);
     }

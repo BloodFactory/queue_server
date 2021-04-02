@@ -2,8 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Organization;
+use App\Entity\Service;
 use Exception;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,25 +12,26 @@ use Symfony\Component\Routing\Annotation\Route;
 use Throwable;
 
 /**
- * @Route("/organizations")
+ * @Route("/services")
  */
-class OrganizationsController extends AbstractController
+class ServiceController extends AbstractController
 {
     /**
      * @Route("", methods={"GET"})
+     * @IsGranted("ROLE_ADMIN")
      * @return Response
      */
     public function fetchList(): Response
     {
-        $organizations = $this->getDoctrine()->getRepository(Organization::class)->findAll();
+        $services = $this->getDoctrine()->getRepository(Service::class)->findAll();
 
         $response = [];
 
-        foreach ($organizations as $index => $organization) {
+        foreach ($services as $index => $service) {
             $response[] = [
-                'id' => $organization->getId(),
+                'id' => $service->getId(),
                 'index' => $index + 1,
-                'name' => $organization->getName()
+                'name' => $service->getName()
             ];
         }
 
@@ -38,25 +40,27 @@ class OrganizationsController extends AbstractController
 
     /**
      * @Route("/{id}", methods={"GET"})
+     * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @return Response
      */
     public function fetch(int $id): Response
     {
-        $organization = $this->getDoctrine()->getRepository(Organization::class)->find($id);
+        $service = $this->getDoctrine()->getRepository(Service::class)->find($id);
 
-        if (!$organization) {
+        if (!$service) {
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
         return $this->json([
-            'id' => $organization->getId(),
-            'name' => $organization->getName()
+            'id' => $service->getId(),
+            'name' => $service->getName()
         ]);
     }
 
     /**
      * @Route("", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
      */
@@ -71,6 +75,7 @@ class OrganizationsController extends AbstractController
 
     /**
      * @param Request $request
+     * @IsGranted("ROLE_ADMIN")
      * @param int|null $id
      * @return Response
      * @throws Exception
@@ -79,21 +84,20 @@ class OrganizationsController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        if (empty($data['name'])) throw new Exception('Укажите название организации');
+        if (empty($data['name'])) throw new Exception('Укажите название услуги');
 
         if (null !== $id) {
-            $organization = $this->getDoctrine()->getRepository(Organization::class)->find($id);
-            if (!$organization) return new Response('', Response::HTTP_NOT_FOUND);
+            $service = $this->getDoctrine()->getRepository(Service::class)->find($id);
+            if (!$service) return new Response('', Response::HTTP_NOT_FOUND);
         } else {
-            $organization = new Organization();
+            $service = new Service();
         }
 
-
-        $organization->setName($data['name']);
+        $service->setName($data['name']);
 
         $em = $this->getDoctrine()->getManager();
 
-        $em->persist($organization);
+        $em->persist($service);
         $em->flush();
 
         $response = new Response();
@@ -105,6 +109,7 @@ class OrganizationsController extends AbstractController
 
     /**
      * @Route("/{id}", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @param Request $request
      * @return Response
@@ -120,19 +125,20 @@ class OrganizationsController extends AbstractController
 
     /**
      * @Route("/{id}", methods={"DELETE"})
+     * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @return Response
      */
     public function delete(int $id): Response
     {
-        $organization = $this->getDoctrine()->getRepository(Organization::class)->find($id);
+        $service = $this->getDoctrine()->getRepository(Service::class)->find($id);
 
-        if (!$organization) {
+        if (!$service) {
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
         $em = $this->getDoctrine()->getManager();
-        $em->remove($organization);
+        $em->remove($service);
         $em->flush();
 
         return new Response();

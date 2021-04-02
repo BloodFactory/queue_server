@@ -35,10 +35,11 @@ class User implements UserInterface
      */
     private ?string $password;
 
+
     /**
-     * @ORM\OneToOne(targetEntity=UserData::class, cascade={"persist", "remove"})
+     * @ORM\Column(type="boolean", options={"default": 1})
      */
-    private ?UserData $userData;
+    private bool $isActive = true;
 
     /**
      * @ORM\ManyToOne(targetEntity=Organization::class)
@@ -46,9 +47,9 @@ class User implements UserInterface
     private ?Organization $organization;
 
     /**
-     * @ORM\Column(type="boolean", options={"default": 1})
+     * @ORM\OneToOne(targetEntity=UserData::class, mappedBy="user", cascade={"persist", "remove"})
      */
-    private bool $isActive = true;
+    private ?UserData $userData;
 
     public function __construct()
     {
@@ -131,14 +132,14 @@ class User implements UserInterface
         // $this->plainPassword = null;
     }
 
-    public function getUserData(): ?UserData
+    public function getIsActive(): ?bool
     {
-        return $this->userData;
+        return $this->isActive;
     }
 
-    public function setUserData(?UserData $userData): self
+    public function setIsActive(bool $isActive): self
     {
-        $this->userData = $userData;
+        $this->isActive = $isActive;
 
         return $this;
     }
@@ -155,14 +156,19 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getIsActive(): ?bool
+    public function getUserData(): ?UserData
     {
-        return $this->isActive;
+        return $this->userData;
     }
 
-    public function setIsActive(bool $isActive): self
+    public function setUserData(UserData $userData): self
     {
-        $this->isActive = $isActive;
+        // set the owning side of the relation if necessary
+        if ($userData->getUser() !== $this) {
+            $userData->setUser($this);
+        }
+
+        $this->userData = $userData;
 
         return $this;
     }

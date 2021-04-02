@@ -9,7 +9,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=OrganizationRepository::class)
- * @ORM\Table(indexes={@ORM\Index(name="name_idx", columns={"name"})})
  */
 class Organization
 {
@@ -21,18 +20,18 @@ class Organization
     private ?int $id;
 
     /**
-     * @ORM\Column(type="string", length=4000)
+     * @ORM\Column(type="string", length=4000, unique=true)
      */
     private ?string $name;
 
     /**
-     * @ORM\OneToMany(targetEntity=Service::class, mappedBy="organization", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity=OrganizationRestDay::class, mappedBy="organization")
      */
-    private Collection $services;
+    private Collection $organizationRestDays;
 
     public function __construct()
     {
-        $this->services = new ArrayCollection();
+        $this->organizationRestDays = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -53,29 +52,29 @@ class Organization
     }
 
     /**
-     * @return Collection|Service[]
+     * @return Collection|OrganizationRestDay[]
      */
-    public function getServices(): Collection
+    public function getOrganizationRestDays(): Collection
     {
-        return $this->services;
+        return $this->organizationRestDays;
     }
 
-    public function addService(Service $service): self
+    public function addOrganizationRestDay(OrganizationRestDay $organizationRestDay): self
     {
-        if (!$this->services->contains($service)) {
-            $this->services[] = $service;
-            $service->setOrganization($this);
+        if (!$this->organizationRestDays->contains($organizationRestDay)) {
+            $this->organizationRestDays[] = $organizationRestDay;
+            $organizationRestDay->setOrganization($this);
         }
 
         return $this;
     }
 
-    public function removeService(Service $service): self
+    public function removeOrganizationRestDay(OrganizationRestDay $organizationRestDay): self
     {
-        if ($this->services->removeElement($service)) {
+        if ($this->organizationRestDays->removeElement($organizationRestDay)) {
             // set the owning side to null (unless already changed)
-            if ($service->getOrganization() === $this) {
-                $service->setOrganization(null);
+            if ($organizationRestDay->getOrganization() === $this) {
+                $organizationRestDay->setOrganization(null);
             }
         }
 
