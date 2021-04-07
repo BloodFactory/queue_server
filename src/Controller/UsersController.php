@@ -46,7 +46,9 @@ class UsersController extends AbstractController
         $response = [];
 
         foreach ($users as $index => $user) {
-            $response[] = $this->transformUserToArray($user);
+            $item = $this->transformUserToArray($user);
+            $item['index'] = $index + 1;
+            $response[] = $item;
         }
 
         return $this->json($response);
@@ -55,11 +57,21 @@ class UsersController extends AbstractController
     private function transformUserToArray(User $user): array
     {
         $userData = $user->getUserData();
+
+        $organization = [];
+
+        if ($user->getOrganization()) {
+            $organization = [
+                'value' => $user->getOrganization()->getId(),
+                'label' => $user->getOrganization()->getName()
+            ];
+        }
+
         return [
             'id' => $user->getId(),
             'isActive' => $user->getIsActive(),
             'username' => $user->getUsername(),
-            'organization' => $user->getOrganization() ? $user->getOrganization()->getName() : '',
+            'organization' => $organization,
             'userData' => $userData ? [
                 'lastName' => $userData->getLastName() ?? '',
                 'firstName' => $userData->getFirstName() ?? '',
@@ -69,7 +81,7 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @Route("/{id}")
+     * @Route("/{id}", methods={"GET"})
      * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @param Request $request
@@ -88,6 +100,7 @@ class UsersController extends AbstractController
 
     /**
      * @Route("", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
      */
@@ -156,7 +169,23 @@ class UsersController extends AbstractController
     }
 
     /**
+     * @Route("/{id}", methods={"POST"})
+     * @param int $id
+     * @param Request $request
+     * @return Response
+     */
+    public function update(int $id, Request $request): Response
+    {
+        try {
+            return $this->save($request, $id);
+        } catch (Throwable $e) {
+            return new Response($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * @Route("/{id}/toggle", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @return Response
      */
@@ -165,7 +194,7 @@ class UsersController extends AbstractController
         $user = $this->getDoctrine()->getRepository(User::class)->find($id);
 
         if (!$user) return new Response('', Response::HTTP_NOT_FOUND);
-        
+
         $user->setIsActive(!$user->getIsActive());
 
         $em = $this->getDoctrine()->getManager();

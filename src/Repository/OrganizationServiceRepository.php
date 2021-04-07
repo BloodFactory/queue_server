@@ -2,25 +2,25 @@
 
 namespace App\Repository;
 
-use App\Entity\OrganizationRestDay;
+use App\Entity\OrganizationService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method OrganizationRestDay|null find($id, $lockMode = null, $lockVersion = null)
- * @method OrganizationRestDay|null findOneBy(array $criteria, array $orderBy = null)
- * @method OrganizationRestDay[]    findAll()
- * @method OrganizationRestDay[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method OrganizationService|null find($id, $lockMode = null, $lockVersion = null)
+ * @method OrganizationService|null findOneBy(array $criteria, array $orderBy = null)
+ * @method OrganizationService[]    findAll()
+ * @method OrganizationService[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class OrganizationRestDayRepository extends ServiceEntityRepository
+class OrganizationServiceRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, OrganizationRestDay::class);
+        parent::__construct($registry, OrganizationService::class);
     }
 
     // /**
-    //  * @return OrganizationRestDay[] Returns an array of OrganizationRestDay objects
+    //  * @return OrganizationService[] Returns an array of OrganizationService objects
     //  */
     /*
     public function findByExampleField($value)
@@ -37,7 +37,7 @@ class OrganizationRestDayRepository extends ServiceEntityRepository
     */
 
     /*
-    public function findOneBySomeField($value): ?OrganizationRestDay
+    public function findOneBySomeField($value): ?OrganizationService
     {
         return $this->createQueryBuilder('o')
             ->andWhere('o.exampleField = :val')

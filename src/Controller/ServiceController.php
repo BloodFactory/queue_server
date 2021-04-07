@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\OrganizationService;
 use App\Entity\Service;
 use Exception;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
@@ -23,7 +24,7 @@ class ServiceController extends AbstractController
      */
     public function fetchList(): Response
     {
-        $services = $this->getDoctrine()->getRepository(Service::class)->findAll();
+        $services = $this->getDoctrine()->getRepository(OrganizationService::class)->findAll();
 
         $response = [];
 

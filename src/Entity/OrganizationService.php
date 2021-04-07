@@ -2,14 +2,16 @@
 
 namespace App\Entity;
 
-use App\Repository\OrganizationRestDayRepository;
-use DateTimeInterface;
+use App\Repository\OrganizationServiceRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass=OrganizationRestDayRepository::class)
+ * @ORM\Entity(repositoryClass=OrganizationServiceRepository::class)
+ * @ORM\Table(uniqueConstraints={
+ *     @ORM\UniqueConstraint(name="organization_service_uniqu_idx", columns={"organization_id", "service_id"})
+ * })
  */
-class OrganizationRestDay
+class OrganizationService
 {
     /**
      * @ORM\Id
@@ -19,15 +21,16 @@ class OrganizationRestDay
     private ?int $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Organization::class, inversedBy="organizationRestDays")
+     * @ORM\ManyToOne(targetEntity=Organization::class, inversedBy="organizationServices")
      * @ORM\JoinColumn(nullable=false)
      */
     private ?Organization $organization;
 
     /**
-     * @ORM\Column(type="date")
+     * @ORM\ManyToOne(targetEntity=Service::class)
+     * @ORM\JoinColumn(nullable=false)
      */
-    private ?DateTimeInterface $day;
+    private ?Service $service;
 
     public function getId(): ?int
     {
@@ -46,14 +49,14 @@ class OrganizationRestDay
         return $this;
     }
 
-    public function getDay(): ?DateTimeInterface
+    public function getService(): ?Service
     {
-        return $this->day;
+        return $this->service;
     }
 
-    public function setDay(DateTimeInterface $day): self
+    public function setService(?Service $service): self
     {
-        $this->day = $day;
+        $this->service = $service;
 
         return $this;
     }

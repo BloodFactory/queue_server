@@ -17,11 +17,21 @@ class InitController extends AbstractController
      */
     public function init(): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
+        /** @var User $_user */
+        $_user = $this->getUser();
 
+        $user = [
+            'username' => $_user->getUsername(),
+        ];
+
+        if ($organization = $_user->getOrganization()) {
+            $user['organization'] = [
+                'id' => $organization->getId(),
+                'name' => $organization->getName()
+            ];
+        }
         return $this->json([
-            'user' => $user->getUsername(),
+            'user' => $user,
             'ability' => $this->getAbilities()
         ]);
     }

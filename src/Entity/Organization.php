@@ -25,13 +25,13 @@ class Organization
     private ?string $name;
 
     /**
-     * @ORM\OneToMany(targetEntity=OrganizationRestDay::class, mappedBy="organization")
+     * @ORM\OneToMany(targetEntity=OrganizationService::class, mappedBy="organization", orphanRemoval=true)
      */
-    private Collection $organizationRestDays;
+    private $organizationServices;
 
     public function __construct()
     {
-        $this->organizationRestDays = new ArrayCollection();
+        $this->organizationServices = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -52,29 +52,29 @@ class Organization
     }
 
     /**
-     * @return Collection|OrganizationRestDay[]
+     * @return Collection|OrganizationService[]
      */
-    public function getOrganizationRestDays(): Collection
+    public function getOrganizationServices(): Collection
     {
-        return $this->organizationRestDays;
+        return $this->organizationServices;
     }
 
-    public function addOrganizationRestDay(OrganizationRestDay $organizationRestDay): self
+    public function addOrganizationService(OrganizationService $organizationService): self
     {
-        if (!$this->organizationRestDays->contains($organizationRestDay)) {
-            $this->organizationRestDays[] = $organizationRestDay;
-            $organizationRestDay->setOrganization($this);
+        if (!$this->organizationServices->contains($organizationService)) {
+            $this->organizationServices[] = $organizationService;
+            $organizationService->setOrganization($this);
         }
 
         return $this;
     }
 
-    public function removeOrganizationRestDay(OrganizationRestDay $organizationRestDay): self
+    public function removeOrganizationService(OrganizationService $organizationService): self
     {
-        if ($this->organizationRestDays->removeElement($organizationRestDay)) {
+        if ($this->organizationServices->removeElement($organizationService)) {
             // set the owning side to null (unless already changed)
-            if ($organizationRestDay->getOrganization() === $this) {
-                $organizationRestDay->setOrganization(null);
+            if ($organizationService->getOrganization() === $this) {
+                $organizationService->setOrganization(null);
             }
         }
 
