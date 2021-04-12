@@ -71,6 +71,7 @@ class OrganizationServiceController extends AbstractController
 
         foreach ($organization->getOrganizationServices() as $organizationService) {
             $service = $organizationService->getService();
+
             $response[] = [
                 'id' => $service->getId(),
                 'name' => $service->getName()

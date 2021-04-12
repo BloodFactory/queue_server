@@ -27,7 +27,7 @@ class Organization
     /**
      * @ORM\OneToMany(targetEntity=OrganizationService::class, mappedBy="organization", orphanRemoval=true)
      */
-    private $organizationServices;
+    private Collection $organizationServices;
 
     public function __construct()
     {
