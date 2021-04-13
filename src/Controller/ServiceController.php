@@ -24,7 +24,7 @@ class ServiceController extends AbstractController
      */
     public function fetchList(): Response
     {
-        $services = $this->getDoctrine()->getRepository(OrganizationService::class)->findAll();
+        $services = $this->getDoctrine()->getRepository(Service::class)->findAll();
 
         $response = [];
 

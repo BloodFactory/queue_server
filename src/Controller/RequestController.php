@@ -13,7 +13,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Throwable;
 
 /**
  * @Route("/requests")
@@ -21,13 +20,12 @@ use Throwable;
 class RequestController extends AbstractController
 {
     /**
-     * @Route("/step1")
+     * @Route("")
      * @return Response
+     * @throws Exception
      */
-    public function step1(): Response
+    public function fetch(): Response
     {
-//        $organizations = $this->getDoctrine()->getRepository(Organization::class)->findAll();
-
         $organizations = $this->getDoctrine()
                               ->getRepository(Organization::class)
                               ->createQueryBuilder('organization')
@@ -42,136 +40,70 @@ class RequestController extends AbstractController
                               ->getQuery()
                               ->getResult();
 
-        dd ($organizations);
-
         $response = [];
 
+        /** @var Organization $organization */
         foreach ($organizations as $organization) {
-            $response[] = [
+            $itemOrganization = [
                 'value' => $organization->getId(),
                 'label' => $organization->getName()
             ];
+
+            /** @var OrganizationService $service */
+            foreach ($organization->getOrganizationServices() as $service) {
+                $itemService = [
+                    'value' => $service->getId(),
+                    'label' => $service->getService()->getName()
+                ];
+
+                /** @var Appointment $appointment */
+                foreach ($service->getAppointments() as $appointment) {
+                    $timeFrom = $appointment->getTimeFrom();
+                    $timeTill = $appointment->getTimeTill();
+                    $duration = $appointment->getDuration();
+                    $needDinner = $appointment->getNeedDinner();
+                    $dinnerFrom = $appointment->getDinnerFrom();
+                    $dinnerTill = $appointment->getDinnerTill();
+                    $persons = $appointment->getPersons();
+
+                    $time = clone $timeFrom;
+
+                    $itemAppointment = [
+                        'id' => $appointment->getId(),
+                        'date' => $appointment->getDate()->format('d.m.Y'),
+                        'duration' => $duration,
+                        'persons' => $persons
+                    ];
+
+                    $registrationTimes = [];
+
+                    foreach ($appointment->getRegistrations() as $registration) {
+                        $registrationTimes[$registration->getTime()->format('H:i')] = empty($registrationTimes[$registration->getTime()->format('H:i')]) ? 1 : $registrationTimes[$registration->getTime()->format('H:i')]++;
+                    }
+
+                    do {
+                        if ($needDinner && $time >= $dinnerFrom && $time < $dinnerTill) continue;
+
+                        $itemTime = [
+                            'value' => $time->format('H:i'),
+                            'free' => empty($registrationTimes[$time->format('H:i')]) || $registrationTimes[$time->format('H:i')] < $persons
+                        ];
+
+                        $itemAppointment['times'][] = $itemTime;
+                    } while ($timeTill > $time->add(new DateInterval('PT' . $duration . 'M')));
+
+                    $itemService['appointments'][] = $itemAppointment;
+                }
+
+                $itemOrganization['services'][] = $itemService;
+            }
+
+            $response[] = $itemOrganization;
         }
 
         return $this->json($response);
     }
 
-    /**
-     * @Route("/step2")
-     * @param Request $request
-     * @return Response
-     */
-    public function step2(Request $request): Response
-    {
-        $organizationID = $request->query->getInt('organization', 0);
-
-        if (!$organizationID) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
-
-        $organizationServices = $this->getDoctrine()->getRepository(OrganizationService::class)->findBy(['organization' => $organizationID]);
-
-        $response = [];
-
-        foreach ($organizationServices as $organizationService) {
-            $service = $organizationService->getService();
-            $response[] = [
-                'value' => $service->getId(),
-                'label' => $service->getName()
-            ];
-        }
-
-        return $this->json($response);
-    }
-
-    /**
-     * @Route("/step3", methods={"GET"})
-     * @param Request $request
-     * @return Response
-     */
-    public function step3(Request $request): Response
-    {
-        $organizationServiceID = $request->query->getInt('service');
-
-        if (!$organizationServiceID) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
-
-        $appointments = $this->getDoctrine()
-                             ->getRepository(Appointment::class)
-                             ->createQueryBuilder('appointment')
-                             ->andWhere('appointment.organizationService = :organizationService')
-                             ->andWhere('appointment.date >= :date')
-                             ->setParameter('organizationService', $organizationServiceID)
-                             ->setParameter('date', new DateTime())
-                             ->getQuery()
-                             ->getResult();
-
-        $response = [];
-
-        foreach ($appointments as $appointment) {
-            $response[] = [
-                'value' => $appointment->getDate()->format('d.m.Y')
-            ];
-        }
-
-        return $this->json($response);
-    }
-
-    /**
-     * @Route("/step4", methods={"GET"})
-     * @param Request $request
-     * @return Response
-     * @throws Exception
-     */
-    public function step4(Request $request): Response
-    {
-        $organizationServiceID = $request->query->getInt('service');
-        $day = $request->query->get('day');
-
-        try {
-            $day = new DateTime($day);
-        } catch (Throwable $e) {
-            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
-        }
-
-        try {
-            /** @var ?Appointment $appointment */
-            $appointment = $this->getDoctrine()
-                                ->getRepository(Appointment::class)
-                                ->createQueryBuilder('appointment')
-                                ->andWhere('appointment.organizationService = :organizationService')
-                                ->andWhere('appointment.date = :date')
-                                ->setParameter('organizationService', $organizationServiceID)
-                                ->setParameter('date', $day)
-                                ->getQuery()
-                                ->getOneOrNullResult();
-        } catch (Throwable $e) {
-            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
-        }
-
-        $response = [];
-
-        if (!$appointment) {
-            return $this->json($response);
-        }
-
-        /** @var DateTime $timeFrom */
-        $timeFrom = $appointment->getTimeFrom();
-        $timeTill = $appointment->getTimeTill();
-        $duration = $appointment->getDuration();
-        $needDinner = $appointment->getNeedDinner();
-        $dinnerFrom = $appointment->getDinnerFrom();
-        $dinnerTill = $appointment->getDinnerTill();
-
-        $time = clone $timeFrom;
-
-        do {
-            if ($needDinner && $time >= $dinnerFrom && $time < $dinnerTill) continue;
-
-            $response[] = [
-                'value' => $time->format('H:i')
-            ];
-        } while ($timeTill > $time->add(new DateInterval('PT' . $duration . 'M')));
-
-        return $this->json($response);
-    }
 
     /**
      * @Route("/registrate", methods={"POST"})
@@ -191,7 +123,7 @@ class RequestController extends AbstractController
                             ->setParameter('service', $data['service'])
                             ->setParameter('date', new DateTime($data['date']))
                             ->getQuery()
-                            ->getOneOrNullResult();;
+                            ->getOneOrNullResult();
 
         $registration = new Registration();
 
