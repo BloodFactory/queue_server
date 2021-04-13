@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/organization/services")
+ * @Route("/organization_services")
  */
 class OrganizationServiceController extends AbstractController
 {
@@ -70,11 +70,9 @@ class OrganizationServiceController extends AbstractController
         $response = [];
 
         foreach ($organization->getOrganizationServices() as $organizationService) {
-            $service = $organizationService->getService();
-
             $response[] = [
-                'id' => $service->getId(),
-                'name' => $service->getName()
+                'id' => $organizationService->getId(),
+                'name' => $organizationService->getService()->getName()
             ];
         }
 

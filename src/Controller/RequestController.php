@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class RequestController extends AbstractController
 {
     /**
-     * @Route("")
+     * @Route("", methods={"GET"})
      * @return Response
      * @throws Exception
      */
@@ -49,15 +49,15 @@ class RequestController extends AbstractController
                 'label' => $organization->getName()
             ];
 
-            /** @var OrganizationService $service */
-            foreach ($organization->getOrganizationServices() as $service) {
+            /** @var OrganizationService $organizationService */
+            foreach ($organization->getOrganizationServices() as $organizationService) {
                 $itemService = [
-                    'value' => $service->getId(),
-                    'label' => $service->getService()->getName()
+                    'value' => $organizationService->getId(),
+                    'label' => $organizationService->getService()->getName()
                 ];
 
                 /** @var Appointment $appointment */
-                foreach ($service->getAppointments() as $appointment) {
+                foreach ($organizationService->getAppointments() as $appointment) {
                     $timeFrom = $appointment->getTimeFrom();
                     $timeTill = $appointment->getTimeTill();
                     $duration = $appointment->getDuration();
@@ -106,7 +106,7 @@ class RequestController extends AbstractController
 
 
     /**
-     * @Route("/registrate", methods={"POST"})
+     * @Route("", methods={"POST"})
      * @param Request $request
      * @return Response
      * @throws Exception
