@@ -14,3 +14,5 @@
 ###< lexik/jwt-authentication-bundle ###
 
 /public/web.config
+
+/.idea
