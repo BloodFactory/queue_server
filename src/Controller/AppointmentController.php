@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use function Doctrine\ORM\QueryBuilder;
 
 /**
  * @Route("/appointments")
@@ -101,13 +102,23 @@ class AppointmentController extends AbstractController
      */
     public function fetchList(Request $request): Response
     {
-        $criteria = [];
-
-        if ($organizationService = $request->query->getInt('organizationService', 0)) {
-            $criteria['organizationService'] = $organizationService;
+        if (!$organizationService = $request->query->getInt('organizationService', 0)) {
+            return new Response('', Response::HTTP_BAD_REQUEST);
         }
 
-        $appointments = $this->getDoctrine()->getRepository(Appointment::class)->findBy($criteria);
+        $appointments = $this->getDoctrine()
+                             ->getRepository(Appointment::class)
+                             ->createQueryBuilder('appointment')
+                             ->addSelect('registrations')
+                             ->leftJoin('appointment.registrations', 'registrations')
+                             ->andWhere('appointment.organizationService = :organizationService')
+                             ->andWhere('appointment.date >= :date')
+                             ->setParameter('organizationService', $organizationService)
+                             ->setParameter('date', new DateTime())
+                             ->addOrderBy('appointment.date')
+                             ->addOrderBy('registrations.time')
+                             ->getQuery()
+                             ->getResult();
 
         $response = [];
 
@@ -120,7 +131,7 @@ class AppointmentController extends AbstractController
 
     private function convertDataToArray(Appointment $appointment): array
     {
-        return [
+        $result = [
             'id' => $appointment->getId(),
             'date' => $appointment->getDate()->format('d.m.Y'),
             'timeFrom' => $appointment->getTimeFrom()->format('H:i'),
@@ -131,6 +142,24 @@ class AppointmentController extends AbstractController
             'duration' => $appointment->getDuration(),
             'persons' => $appointment->getPersons()
         ];
+
+        foreach ($appointment->getRegistrations() as $registration) {
+            $result['registrations'][] = [
+                'id' => $registration->getId(),
+                'time' => $registration->getTime()->format('H:i'),
+                'status' => $registration->getStatus(),
+                'person' => [
+                    'lastName' => $registration->getLastName(),
+                    'firstName' => $registration->getFirstName(),
+                    'middleName' => $registration->getMiddleName() ?? '',
+                    'birthday' => $registration->getBirthday()->format('d.m.Y'),
+                    'phone' => $registration->getPhone(),
+                    'email' => $registration->getEmail()
+                ]
+            ];
+        }
+
+        return $result;
     }
 
     /**
