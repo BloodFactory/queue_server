@@ -29,6 +29,11 @@ class Organization
      */
     private Collection $organizationServices;
 
+    /**
+     * @ORM\Column(type="smallint", options={"default": 3})
+     */
+    private ?int $timezone = 3;
+
     public function __construct()
     {
         $this->organizationServices = new ArrayCollection();
@@ -77,6 +82,18 @@ class Organization
                 $organizationService->setOrganization(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getTimezone(): ?int
+    {
+        return $this->timezone;
+    }
+
+    public function setTimezone(int $timezone): self
+    {
+        $this->timezone = $timezone;
 
         return $this;
     }

@@ -14,12 +14,12 @@ use function Doctrine\ORM\QueryBuilder;
 
 /**
  * @Route("/appointments")
+ * @IsGranted("ROLE_USER")
  */
 class AppointmentController extends AbstractController
 {
     /**
      * @Route("", methods={"POST"})
-     * @IsGranted("ROLE_USER")
      * @param Request $request
      * @return Response
      */
@@ -32,17 +32,17 @@ class AppointmentController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        if (empty($data['organizationService'])) return new Response('Неверный формат запроса1', Response::HTTP_BAD_REQUEST);
-        if (empty($data['date'])) return new Response('Неверный формат запроса2', Response::HTTP_BAD_REQUEST);
-        if (empty($data['timeFrom'])) return new Response('Неверный формат запроса3', Response::HTTP_BAD_REQUEST);
-        if (empty($data['timeTill'])) return new Response('Неверный формат запроса4', Response::HTTP_BAD_REQUEST);
-        if (!isset($data['needDinner'])) return new Response('Неверный формат запроса5', Response::HTTP_BAD_REQUEST);
-        if (empty($data['duration'])) return new Response('Неверный формат запроса6', Response::HTTP_BAD_REQUEST);
-        if (empty($data['persons'])) return new Response('Неверный формат запроса7', Response::HTTP_BAD_REQUEST);
+        if (empty($data['organizationService'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['date'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['timeFrom'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['timeTill'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (!isset($data['needDinner'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['duration'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['persons'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
 
         if ($data['needDinner']) {
-            if (empty($data['dinnerFrom'])) return new Response('Неверный формат запроса8', Response::HTTP_BAD_REQUEST);
-            if (empty($data['dinnerTill'])) return new Response('Неверный формат запроса9', Response::HTTP_BAD_REQUEST);
+            if (empty($data['dinnerFrom'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+            if (empty($data['dinnerTill'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -56,39 +56,44 @@ class AppointmentController extends AbstractController
         }
 
         if (!$organizationService = $this->getDoctrine()->getRepository(OrganizationService::class)->find($data['organizationService'])) {
-            return new Response('Неверный формат запроса11', Response::HTTP_BAD_REQUEST);
+            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         }
 
 
         if ($id) {
-            $organizationServiceAppointment = $this->getDoctrine()->getRepository(Appointment::class)->find($id);
-            if (!$organizationServiceAppointment) return new Response('Неверный формат запроса', Response::HTTP_NOT_FOUND);
+            $appointment = $this->getDoctrine()->getRepository(Appointment::class)->find($id);
+            if (!$appointment) return new Response('Неверный формат запроса', Response::HTTP_NOT_FOUND);
         } else {
-            $organizationServiceAppointment = new Appointment();
+            $appointment = new Appointment();
+        }
+
+
+        if ($appointment->getRegistrations()->count() > 0) {
+            return new Response('Редактирование заявки запрещено, так как имеются записанные кандидаты', Response::HTTP_FORBIDDEN);
         }
 
         try {
-            $organizationServiceAppointment->setOrganizationService($organizationService)
-                                           ->setDate($date)
-                                           ->setTimeFrom($timeFrom)
-                                           ->setTimeTill($timeTill)
-                                           ->setNeedDinner($data['needDinner'])
-                                           ->setDinnerFrom($dinnerFrom)
-                                           ->setDinnerTill($dinnerTill)
-                                           ->setDuration((int)$data['duration'])
-                                           ->setPersons((int)$data['persons']);
+            $appointment->setOrganizationService($organizationService)
+                        ->setDate($date)
+                        ->setTimeFrom($timeFrom)
+                        ->setTimeTill($timeTill)
+                        ->setNeedDinner($data['needDinner'])
+                        ->setDinnerFrom($dinnerFrom)
+                        ->setDinnerTill($dinnerTill)
+                        ->setDuration((int)$data['duration'])
+                        ->setPersons((int)$data['persons']);
         } catch (\Throwable $e) {
-            return new Response('Неверный формат запроса12', Response::HTTP_BAD_REQUEST);
+            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         }
 
         $em = $this->getDoctrine()->getManager();
 
-        $em->persist($organizationServiceAppointment);
+        $em->persist($appointment);
 
         try {
             $em->flush();
         } catch (\Throwable $e) {
-            return new Response('Неудалсоь выполнить запрос13', Response::HTTP_BAD_REQUEST);
+            return new Response('Неудалсоь выполнить запрос', Response::HTTP_BAD_REQUEST);
         }
 
         return new Response();
@@ -96,7 +101,6 @@ class AppointmentController extends AbstractController
 
     /**
      * @Route("", methods={"GET"})
-     * @IsGranted("ROLE_USER")
      * @param Request $request
      * @return Response
      */
@@ -164,7 +168,6 @@ class AppointmentController extends AbstractController
 
     /**
      * @Route("/{id}", methods={"GET"})
-     * @IsGranted("ROLE_USER")
      * @param int $id
      * @return Response
      */
@@ -181,7 +184,6 @@ class AppointmentController extends AbstractController
 
     /**
      * @Route("/{id}", methods={"POST"})
-     * @IsGranted("ROLE_USER")
      * @param int $id
      * @param Request $request
      * @return Response
@@ -189,5 +191,29 @@ class AppointmentController extends AbstractController
     public function update(int $id, Request $request): Response
     {
         return $this->save($request, $id);
+    }
+
+    /**
+     * @Route("/{id}", methods={"DELETE"})
+     * @param int $id
+     * @return Response
+     */
+    public function delete(int $id): Response
+    {
+        $appointment = $this->getDoctrine()->getRepository(Appointment::class)->find($id);
+
+        if (!$appointment) {
+            return new Response('Заявка на приём не найдена', Response:: HTTP_NOT_FOUND);
+        }
+
+        if ($appointment->getRegistrations()->count() > 0) {
+            return new Response('Удаление заявки запрещено, так как имеются записанные кандидаты', Response::HTTP_FORBIDDEN);
+        }
+
+        $em = $this->getDoctrine()->getManager();
+        $em->remove($appointment);
+        $em->flush();
+
+        return new  Response();
     }
 }

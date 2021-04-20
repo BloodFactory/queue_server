@@ -26,10 +26,17 @@ class OrganizationsController extends AbstractController
         $response = [];
 
         foreach ($organizations as $index => $organization) {
+            $timezone = $organization->getTimezone();
+
+            if ($timezone !== 0) {
+                $timezone = ($timezone > 0 ? '+' : '-') . $timezone;
+            }
+
             $response[] = [
                 'id' => $organization->getId(),
                 'index' => $index + 1,
-                'name' => $organization->getName()
+                'name' => $organization->getName(),
+                'timezone' => $timezone
             ];
         }
 
@@ -51,7 +58,8 @@ class OrganizationsController extends AbstractController
 
         return $this->json([
             'id' => $organization->getId(),
-            'name' => $organization->getName()
+            'name' => $organization->getName(),
+            'timezone' => $organization->getTimezone()
         ]);
     }
 
@@ -80,6 +88,8 @@ class OrganizationsController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (empty($data['name'])) throw new Exception('Укажите название организации');
+        if (empty($data['timezone'])) throw new Exception('Укажите часовой пояс');
+        if (!is_int($data['timezone'])) throw new Exception('Часовой пояс должен быть числом в диапазоне от -12 до +12');
 
         if (null !== $id) {
             $organization = $this->getDoctrine()->getRepository(Organization::class)->find($id);
@@ -88,8 +98,8 @@ class OrganizationsController extends AbstractController
             $organization = new Organization();
         }
 
-
-        $organization->setName($data['name']);
+        $organization->setName($data['name'])
+                     ->setTimezone($data['timezone']);
 
         $em = $this->getDoctrine()->getManager();
 

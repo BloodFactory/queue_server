@@ -8,7 +8,9 @@ use App\Entity\OrganizationService;
 use App\Entity\Registration;
 use DateInterval;
 use DateTime;
+use DateTimeImmutable;
 use Exception;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,8 +44,13 @@ class RequestController extends AbstractController
 
         $response = [];
 
+        $_now = new DateTimeImmutable();
+
         /** @var Organization $organization */
         foreach ($organizations as $organization) {
+            $now = DateTime::createFromImmutable($_now);
+            $now->setTime((int)$now->format('H') + $organization->getTimezone() - 3, (int)$now->format('i'));
+
             $itemOrganization = [
                 'value' => $organization->getId(),
                 'label' => $organization->getName()
@@ -66,6 +73,9 @@ class RequestController extends AbstractController
                     $dinnerTill = $appointment->getDinnerTill();
                     $persons = $appointment->getPersons();
 
+                    /** @var DateTime $day */
+                    $day = clone $appointment->getDate();
+
                     $time = clone $timeFrom;
 
                     $itemAppointment = [
@@ -78,15 +88,19 @@ class RequestController extends AbstractController
                     $registrationTimes = [];
 
                     foreach ($appointment->getRegistrations() as $registration) {
+                        if (false === $registration->getStatus()) continue;
+
                         $registrationTimes[$registration->getTime()->format('H:i')] = empty($registrationTimes[$registration->getTime()->format('H:i')]) ? 1 : $registrationTimes[$registration->getTime()->format('H:i')]++;
                     }
 
                     do {
                         if ($needDinner && $time >= $dinnerFrom && $time < $dinnerTill) continue;
 
+                        $day->setTime((int)$time->format('H'), (int)$time->format('i'));
+
                         $itemTime = [
                             'value' => $time->format('H:i'),
-                            'free' => empty($registrationTimes[$time->format('H:i')]) || $registrationTimes[$time->format('H:i')] < $persons
+                            'free' => $day > $now && (empty($registrationTimes[$time->format('H:i')]) || $registrationTimes[$time->format('H:i')] < $persons)
                         ];
 
                         $itemAppointment['times'][] = $itemTime;
@@ -147,6 +161,32 @@ class RequestController extends AbstractController
 
         $em = $this->getDoctrine()->getManager();
 
+        $em->persist($registration);
+        $em->flush();
+
+        return new Response();
+    }
+
+    /**
+     * @Route("/{id}/status", methods={"POST"})
+     * @IsGranted("ROLE_CLIENT")
+     * @param int $id
+     * @param Request $request
+     * @return Response
+     */
+    public function setStatus(int $id, Request $request): Response
+    {
+        $registration = $this->getDoctrine()->getRepository(Registration::class)->find($id);
+
+        if (!$registration) {
+            return new Response('Заявка не найдена', Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        $registration->setStatus($data['status']);
+
+        $em = $this->getDoctrine()->getManager();
         $em->persist($registration);
         $em->flush();
 
