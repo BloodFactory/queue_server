@@ -11,12 +11,12 @@ use Symfony\Component\Routing\Annotation\Route;
 use Throwable;
 
 /**
- * @Route("/organizations")
+ * @Route("/organizations", name="organizations_")
  */
 class OrganizationsController extends AbstractController
 {
     /**
-     * @Route("", methods={"GET"})
+     * @Route("", methods={"GET"}, name="fetch_list")
      * @return Response
      */
     public function fetchList(): Response
@@ -44,7 +44,7 @@ class OrganizationsController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"GET"})
+     * @Route("/{id}", methods={"GET"}, name="fetch")
      * @param int $id
      * @return Response
      */
@@ -64,7 +64,7 @@ class OrganizationsController extends AbstractController
     }
 
     /**
-     * @Route("", methods={"POST"})
+     * @Route("", methods={"POST"}, name="add")
      * @param Request $request
      * @return Response
      */
@@ -114,7 +114,7 @@ class OrganizationsController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"POST"})
+     * @Route("/{id}", methods={"POST"}, name="update")
      * @param int $id
      * @param Request $request
      * @return Response
@@ -129,7 +129,7 @@ class OrganizationsController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"DELETE"})
+     * @Route("/{id}", methods={"DELETE"}, name="delete")
      * @param int $id
      * @return Response
      */

@@ -12,12 +12,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/organization_services")
+ * @Route("/organization_services", name="organization_services_")
  */
 class OrganizationServiceController extends AbstractController
 {
     /**
-     * @Route("", methods={"POST"})
+     * @Route("", methods={"POST"}, name="add")
      * @IsGranted("ROLE_USER")
      * @param Request $request
      * @return Response
@@ -54,7 +54,7 @@ class OrganizationServiceController extends AbstractController
     }
 
     /**
-     * @Route("", methods={"GET"})
+     * @Route("", methods={"GET"}, name="fetch_list")
      * @IsGranted("ROLE_USER")
      * @return Response
      */
@@ -80,7 +80,7 @@ class OrganizationServiceController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"DELETE"})
+     * @Route("/{id}", methods={"DELETE"}, name="delete")
      * @param int $id
      * @return Response
      */

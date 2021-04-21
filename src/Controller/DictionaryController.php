@@ -9,12 +9,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/dictionary")
+ * @Route("/dictionary", name="dictionary_")
  */
 class DictionaryController extends AbstractController
 {
     /**
-     * @Route("/organizations", methods={"GET"})
+     * @Route("/organizations", methods={"GET"}, name="orgainzations")
      * @return Response
      */
     public function fetchOrganizations(): Response
@@ -34,7 +34,7 @@ class DictionaryController extends AbstractController
     }
 
     /**
-     * @Route("/services", methods={"GET"})
+     * @Route("/services", methods={"GET"}, name="services")
      * @return Response
      */
     public function fetchServices(): Response

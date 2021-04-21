@@ -17,12 +17,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/requests")
+ * @Route("/requests", name="requests_")
  */
 class RequestController extends AbstractController
 {
     /**
-     * @Route("", methods={"GET"})
+     * @Route("", methods={"GET"}, name="fetch")
      * @return Response
      * @throws Exception
      */
@@ -120,7 +120,7 @@ class RequestController extends AbstractController
 
 
     /**
-     * @Route("", methods={"POST"})
+     * @Route("", methods={"POST"}, name="registrate")
      * @param Request $request
      * @return Response
      * @throws Exception
@@ -168,7 +168,7 @@ class RequestController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/status", methods={"POST"})
+     * @Route("/{id}/status", methods={"POST"}, name="set_status")
      * @IsGranted("ROLE_CLIENT")
      * @param int $id
      * @param Request $request

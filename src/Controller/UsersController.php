@@ -15,7 +15,7 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Throwable;
 
 /**
- * @Route("/users")
+ * @Route("/users", name="users")
  */
 class UsersController extends AbstractController
 {
@@ -27,7 +27,7 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @Route("", methods={"GET"})
+     * @Route("", methods={"GET"}, name="fetch_list")
      * @IsGranted("ROLE_ADMIN")
      * @return Response
      */
@@ -81,7 +81,7 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"GET"})
+     * @Route("/{id}", methods={"GET"}, name="fetch")
      * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @param Request $request
@@ -99,7 +99,7 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @Route("", methods={"POST"})
+     * @Route("", methods={"POST"}, name="add")
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
@@ -169,7 +169,7 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"POST"})
+     * @Route("/{id}", methods={"POST"}, name="update")
      * @param int $id
      * @param Request $request
      * @return Response
@@ -184,7 +184,7 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/toggle", methods={"POST"})
+     * @Route("/{id}/toggle", methods={"POST"}, name="toggle")
      * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @return Response

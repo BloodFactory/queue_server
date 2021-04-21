@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class InitController extends AbstractController
 {
     /**
-     * @Route("/init", methods={"GET"})
+     * @Route("/init", methods={"GET"}, name="init_app")
      * @IsGranted("ROLE_USER")
      * @return Response
      */

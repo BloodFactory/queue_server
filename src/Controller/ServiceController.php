@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\OrganizationService;
 use App\Entity\Service;
 use Exception;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
@@ -13,12 +12,12 @@ use Symfony\Component\Routing\Annotation\Route;
 use Throwable;
 
 /**
- * @Route("/services")
+ * @Route("/services", name="services_")
  */
 class ServiceController extends AbstractController
 {
     /**
-     * @Route("", methods={"GET"})
+     * @Route("", methods={"GET"}, name="fetch_list")
      * @IsGranted("ROLE_ADMIN")
      * @return Response
      */
@@ -40,7 +39,7 @@ class ServiceController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"GET"})
+     * @Route("/{id}", methods={"GET"}, name="fetch")
      * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @return Response
@@ -60,7 +59,7 @@ class ServiceController extends AbstractController
     }
 
     /**
-     * @Route("", methods={"POST"})
+     * @Route("", methods={"POST"}, name="add")
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
@@ -76,7 +75,6 @@ class ServiceController extends AbstractController
 
     /**
      * @param Request $request
-     * @IsGranted("ROLE_ADMIN")
      * @param int|null $id
      * @return Response
      * @throws Exception
@@ -109,7 +107,7 @@ class ServiceController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"POST"})
+     * @Route("/{id}", methods={"POST"}, name="update")
      * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @param Request $request
@@ -125,7 +123,7 @@ class ServiceController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"DELETE"})
+     * @Route("/{id}", methods={"DELETE"}, name="delete")
      * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @return Response
