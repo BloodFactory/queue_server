@@ -151,7 +151,6 @@ class AppointmentController extends AbstractController
             $result['registrations'][] = [
                 'id' => $registration->getId(),
                 'time' => $registration->getTime()->format('H:i'),
-                'status' => $registration->getStatus(),
                 'person' => [
                     'lastName' => $registration->getLastName(),
                     'firstName' => $registration->getFirstName(),

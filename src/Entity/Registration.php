@@ -62,11 +62,6 @@ class Registration
      */
     private ?string $email;
 
-    /**
-     * @ORM\Column(type="boolean", nullable=true)
-     */
-    private ?bool $status;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -164,18 +159,6 @@ class Registration
     public function setEmail(?string $email): self
     {
         $this->email = $email;
-
-        return $this;
-    }
-
-    public function getStatus(): ?bool
-    {
-        return $this->status;
-    }
-
-    public function setStatus(?bool $status): self
-    {
-        $this->status = $status;
 
         return $this;
     }

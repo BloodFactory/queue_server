@@ -49,7 +49,15 @@ class RequestController extends AbstractController
         /** @var Organization $organization */
         foreach ($organizations as $organization) {
             $now = DateTime::createFromImmutable($_now);
-            $now->setTime((int)$now->format('H') + $organization->getTimezone() - 3, (int)$now->format('i'));
+
+            $diff = $organization->getTimezone() - 3;
+
+            if ($diff > 0) {
+                $now->add(new DateInterval("PT{$diff}H"));
+            } elseif ($diff < 0) {
+                $diff = abs($diff);
+                $now->sub(new DateInterval("PT{$diff}H"));
+            }
 
             $itemOrganization = [
                 'value' => $organization->getId(),
@@ -88,8 +96,6 @@ class RequestController extends AbstractController
                     $registrationTimes = [];
 
                     foreach ($appointment->getRegistrations() as $registration) {
-                        if (false === $registration->getStatus()) continue;
-
                         $registrationTimes[$registration->getTime()->format('H:i')] = empty($registrationTimes[$registration->getTime()->format('H:i')]) ? 1 : $registrationTimes[$registration->getTime()->format('H:i')]++;
                     }
 
@@ -125,7 +131,7 @@ class RequestController extends AbstractController
      * @return Response
      * @throws Exception
      */
-    public function registrate(Request $request): Response
+    public function reg(Request $request): Response
     {
         $data = json_decode($request->getContent(), true);
 
@@ -138,6 +144,36 @@ class RequestController extends AbstractController
                             ->setParameter('date', new DateTime($data['date']))
                             ->getQuery()
                             ->getOneOrNullResult();
+
+        /** @var Registration[] $reg */
+        $reg = $this->getDoctrine()
+                    ->getRepository(Registration::class)
+                    ->createQueryBuilder('registration')
+                    ->addSelect('appointment')
+                    ->leftJoin('registration.appointment', 'appointment')
+                    ->andWhere('appointment.date >= :date')
+                    ->andWhere('registration.lastName = :lastName')
+                    ->andWhere('registration.firstName = :firstName')
+                    ->andWhere('registration.birthday = :birthday')
+                    ->setParameter('date', new DateTime($data['date']))
+                    ->setParameter('lastName', $data['lastName'])
+                    ->setParameter('firstName', $data['firstName'])
+                    ->setParameter('birthday', new DateTime($data['birthday']));
+
+
+        if (!empty($data['middleName'])) {
+            $reg->andWhere('registration.middleName = :firstName')->setParameter('middleName', $data['middleName']);
+        }
+
+        $reg = $reg->getQuery()
+                   ->getResult();
+
+//        dd($reg);
+
+        if ($reg) {
+            $d = $reg[0]->getAppointment()->getDate()->format('d.m.Y') . ' ' . $reg[0]->getTime()->format('H:i');
+            return new Response("Вы уже записаны на ${d}", Response::HTTP_CONFLICT);
+        }
 
         $registration = new Registration();
 
@@ -168,13 +204,13 @@ class RequestController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/status", methods={"POST"}, name="set_status")
+     * @Route("/{id}", methods={"DELETE"}, name="delete")
      * @IsGranted("ROLE_CLIENT")
      * @param int $id
      * @param Request $request
      * @return Response
      */
-    public function setStatus(int $id, Request $request): Response
+    public function delete(int $id, Request $request): Response
     {
         $registration = $this->getDoctrine()->getRepository(Registration::class)->find($id);
 
@@ -182,12 +218,8 @@ class RequestController extends AbstractController
             return new Response('Заявка не найдена', Response::HTTP_NOT_FOUND);
         }
 
-        $data = json_decode($request->getContent(), true);
-
-        $registration->setStatus($data['status']);
-
         $em = $this->getDoctrine()->getManager();
-        $em->persist($registration);
+        $em->remove($registration);
         $em->flush();
 
         return new Response();

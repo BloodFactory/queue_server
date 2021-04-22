@@ -45,7 +45,7 @@ class RequestLog
      */
     private ?string $path;
 
-    public function getId(): ?int
+    public function getId(): ?string
     {
         return $this->id;
     }
