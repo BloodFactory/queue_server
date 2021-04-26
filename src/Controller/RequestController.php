@@ -96,17 +96,19 @@ class RequestController extends AbstractController
                     $registrationTimes = [];
 
                     foreach ($appointment->getRegistrations() as $registration) {
-                        $registrationTimes[$registration->getTime()->format('H:i')] = empty($registrationTimes[$registration->getTime()->format('H:i')]) ? 1 : $registrationTimes[$registration->getTime()->format('H:i')]++;
+                        $registrationTime = $registration->getTime()->format('H:i');
+                        $registrationTimes[$registrationTime] = empty($registrationTimes[$registrationTime]) ? 1 : $registrationTimes[$registrationTime] + 1;
                     }
 
                     do {
                         if ($needDinner && $time >= $dinnerFrom && $time < $dinnerTill) continue;
 
                         $day->setTime((int)$time->format('H'), (int)$time->format('i'));
+                        $timeStr = $time->format('H:i');
 
                         $itemTime = [
-                            'value' => $time->format('H:i'),
-                            'free' => $day > $now && (empty($registrationTimes[$time->format('H:i')]) || $registrationTimes[$time->format('H:i')] < $persons)
+                            'value' => $timeStr,
+                            'free' => ($day > $now) && (empty($registrationTimes[$timeStr]) || $registrationTimes[$timeStr] < $persons)
                         ];
 
                         $itemAppointment['times'][] = $itemTime;
@@ -135,6 +137,9 @@ class RequestController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
+        $registrationTime = new DateTime($data['time']);
+
+        /** @var Appointment|null $appointment */
         $appointment = $this->getDoctrine()
                             ->getRepository(Appointment::class)
                             ->createQueryBuilder('appointment')
@@ -145,34 +150,44 @@ class RequestController extends AbstractController
                             ->getQuery()
                             ->getOneOrNullResult();
 
-        /** @var Registration[] $reg */
-        $reg = $this->getDoctrine()
-                    ->getRepository(Registration::class)
-                    ->createQueryBuilder('registration')
-                    ->addSelect('appointment')
-                    ->leftJoin('registration.appointment', 'appointment')
-                    ->andWhere('appointment.date >= :date')
-                    ->andWhere('registration.lastName = :lastName')
-                    ->andWhere('registration.firstName = :firstName')
-                    ->andWhere('registration.birthday = :birthday')
-                    ->setParameter('date', new DateTime($data['date']))
-                    ->setParameter('lastName', $data['lastName'])
-                    ->setParameter('firstName', $data['firstName'])
-                    ->setParameter('birthday', new DateTime($data['birthday']));
-
+        $userRegistrations = $this->getDoctrine()
+                                  ->getRepository(Registration::class)
+                                  ->createQueryBuilder('registration')
+                                  ->addSelect('appointment')
+                                  ->leftJoin('registration.appointment', 'appointment')
+                                  ->andWhere('appointment.date >= :date')
+                                  ->andWhere('registration.lastName = :lastName')
+                                  ->andWhere('registration.firstName = :firstName')
+                                  ->andWhere('registration.birthday = :birthday')
+                                  ->setParameter('date', new DateTime($data['date']))
+                                  ->setParameter('lastName', $data['lastName'])
+                                  ->setParameter('firstName', $data['firstName'])
+                                  ->setParameter('birthday', new DateTime($data['birthday']));
 
         if (!empty($data['middleName'])) {
-            $reg->andWhere('registration.middleName = :firstName')->setParameter('middleName', $data['middleName']);
+            $userRegistrations->andWhere('registration.middleName = :firstName')->setParameter('middleName', $data['middleName']);
         }
 
-        $reg = $reg->getQuery()
-                   ->getResult();
+        $userRegistrations = $userRegistrations->getQuery()
+                                               ->getResult();
 
-//        dd($reg);
-
-        if ($reg) {
-            $d = $reg[0]->getAppointment()->getDate()->format('d.m.Y') . ' ' . $reg[0]->getTime()->format('H:i');
+        if ($userRegistrations) {
+            $d = $userRegistrations[0]->getAppointment()->getDate()->format('d.m.Y') . ' ' . $userRegistrations[0]->getTime()->format('H:i');
             return new Response("Вы уже записаны на ${d}", Response::HTTP_CONFLICT);
+        }
+
+        $totalRegistrations = $this->getDoctrine()
+                                   ->getRepository(Registration::class)
+                                   ->createQueryBuilder('registration')
+                                   ->select('count(registration.id)')
+                                   ->andWhere('registration.time = :time')
+                                   ->andWhere('registration.appointment = :appointment')
+                                   ->setParameter('time', $registrationTime)
+                                   ->setParameter('appointment', $appointment->getId())
+                                   ->getQuery()->getSingleScalarResult();
+
+        if ($totalRegistrations >= $appointment->getPersons()) {
+            return new Response("На данное время больше нет вакантных мест", Response::HTTP_CONFLICT);
         }
 
         $registration = new Registration();
@@ -181,7 +196,7 @@ class RequestController extends AbstractController
                      ->setBirthday(new DateTime($data['birthday']))
                      ->setLastName($data['lastName'])
                      ->setFirstName($data['firstName'])
-                     ->setTime(new DateTime($data['time']));
+                     ->setTime($registrationTime);
 
         if (!empty($data['middleName'])) {
             $registration->setMiddleName($data['middleName']);
