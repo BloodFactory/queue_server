@@ -50,7 +50,7 @@ class RequestController extends AbstractController
         foreach ($organizations as $organization) {
             $now = DateTime::createFromImmutable($_now);
 
-            $diff = $organization->getTimezone() - 3;
+            $diff = $organization->getTimezone();
 
             if ($diff > 0) {
                 $now->add(new DateInterval("PT{$diff}H"));

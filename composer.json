@@ -5,11 +5,13 @@
     "php": ">=7.4",
     "ext-ctype": "*",
     "ext-iconv": "*",
+    "ext-json": "*",
     "composer/package-versions-deprecated": "1.11.99.1",
     "doctrine/doctrine-bundle": "^2.2",
     "doctrine/doctrine-migrations-bundle": "^3.0",
     "doctrine/orm": "^2.8",
     "gesdinet/jwt-refresh-token-bundle": "^0.11.1",
+    "knplabs/knp-paginator-bundle": "^5.4",
     "lexik/jwt-authentication-bundle": "^2.11",
     "sensio/framework-extra-bundle": "^6.1",
     "symfony/console": "4.4.*",
@@ -19,8 +21,7 @@
     "symfony/monolog-bundle": "^3.6",
     "symfony/proxy-manager-bridge": "4.4.*",
     "symfony/security-bundle": "4.4.*",
-    "symfony/yaml": "4.4.*",
-    "ext-json": "*"
+    "symfony/yaml": "4.4.*"
   },
   "require-dev": {
     "symfony/maker-bundle": "^1.29"

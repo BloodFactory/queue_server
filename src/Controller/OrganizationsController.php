@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Organization;
 use Exception;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,11 +18,21 @@ class OrganizationsController extends AbstractController
 {
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
+     * @param Request $request
+     * @param PaginatorInterface $paginator
      * @return Response
      */
-    public function fetchList(): Response
+    public function fetchList(Request $request, PaginatorInterface $paginator): Response
     {
-        $organizations = $this->getDoctrine()->getRepository(Organization::class)->findAll();
+        $page = $request->query->getInt('page');
+        $limit = $request->query->getInt('limit');
+
+        $qb = $this->getDoctrine()
+                   ->getRepository(Organization::class)
+                   ->createQueryBuilder('organization')
+                   ->addOrderBy('organization.name');
+
+        $organizations = $paginator->paginate($qb->getQuery(), $page, $limit);
 
         $response = [];
 
@@ -32,13 +43,15 @@ class OrganizationsController extends AbstractController
                 $timezone = ($timezone > 0 ? '+' : '-') . $timezone;
             }
 
-            $response[] = [
+            $response['data'][] = [
                 'id' => $organization->getId(),
                 'index' => $index + 1,
                 'name' => $organization->getName(),
                 'timezone' => $timezone
             ];
         }
+
+        $response['count'] = $organizations->getTotalItemCount();
 
         return $this->json($response);
     }
