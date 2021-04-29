@@ -9,12 +9,14 @@ use App\Entity\Registration;
 use DateInterval;
 use DateTime;
 use DateTimeImmutable;
+use Doctrine\ORM\NonUniqueResultException;
 use Exception;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Throwable;
 
 /**
  * @Route("/requests", name="requests_")
@@ -238,5 +240,75 @@ class RequestController extends AbstractController
         $em->flush();
 
         return new Response();
+    }
+
+    /**
+     * @Route("/search", name="search")
+     * @param Request $request
+     * @return Response
+     */
+    public function search(Request $request): Response
+    {
+        $query = $request->query;
+
+        $lastName = $query->get('lastName', '');
+        $firstName = $query->get('firstName', '');
+        $middleName = $query->get('middleName', '');
+        $birthday = $query->get('birthday', '');
+
+        if (!$lastName) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (!$firstName) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (!$birthday) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+
+        try {
+            $_birthday = new DateTime($birthday);
+
+            if ($birthday !== $_birthday->format('d.m.Y')) throw new Exception();
+
+            $birthday = $_birthday;
+        } catch (Throwable $e) {
+            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        }
+
+        $now = new DateTime();
+
+        $qb = $this->getDoctrine()
+                   ->getRepository(Registration::class)
+                   ->createQueryBuilder('registration')
+                   ->addSelect('appointment')
+                   ->leftJoin('registration.appointment', 'appointment')
+                   ->leftJoin('appointment.organizationService', 'organizationService')
+                   ->leftJoin('organizationService.organization', 'organization')
+                   ->andWhere('appointment.date = :date')
+                   ->andWhere('DATEADD(hour, organization.timezone, registration.time) > :date')
+                   ->orWhere('appointment.date > :date')
+                   ->andWhere('registration.lastName = :lastName')
+                   ->andWhere('registration.firstName = :firstName')
+                   ->andWhere('registration.birthday = :birthday')
+                   ->setParameter('date', $now)
+                   ->setParameter('lastName', $lastName)
+                   ->setParameter('firstName', $firstName)
+                   ->setParameter('birthday', $birthday);
+
+        if ($middleName) {
+            $qb->andWhere('registration.middleName = :middleName')
+               ->setParameter('middleName', $middleName);
+        }
+
+        try {
+            /** @var ?Registration $registration */
+            $registration = $qb->getQuery()->getOneOrNullResult();
+        } catch (NonUniqueResultException $e) {
+            return new Response('По данному запросу найдено более обной записи', Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$registration) {
+            return new Response('По данному запросу ничего не найдено', Response::HTTP_BAD_REQUEST);
+        }
+
+        $date = $registration->getAppointment()->getDate()->format('d.m.Y');
+        $time = $registration->getTime()->format('H:i');
+
+        return new Response("Вы записаны ${date} на ${time}");
     }
 }
