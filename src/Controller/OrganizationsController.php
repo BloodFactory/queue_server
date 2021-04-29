@@ -24,8 +24,8 @@ class OrganizationsController extends AbstractController
      */
     public function fetchList(Request $request, PaginatorInterface $paginator): Response
     {
-        $page = $request->query->getInt('page');
-        $limit = $request->query->getInt('limit');
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
 
         $qb = $this->getDoctrine()
                    ->getRepository(Organization::class)
@@ -45,7 +45,7 @@ class OrganizationsController extends AbstractController
 
             $response['data'][] = [
                 'id' => $organization->getId(),
-                'index' => $index + 1,
+                'index' => ($index + 1) + ($page - 1) * $limit,
                 'name' => $organization->getName(),
                 'timezone' => $timezone
             ];

@@ -6,6 +6,7 @@ use App\Entity\Organization;
 use App\Entity\User;
 use App\Entity\UserData;
 use Exception;
+use Knp\Component\Pager\PaginatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,27 +30,36 @@ class UsersController extends AbstractController
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
      * @IsGranted("ROLE_ADMIN")
+     * @param Request $request
+     * @param PaginatorInterface $paginator
      * @return Response
      */
-    public function fetchList(): Response
+    public function fetchList(Request $request, PaginatorInterface $paginator): Response
     {
-        $users = $this->getDoctrine()->getRepository(User::class)->createQueryBuilder('u')
-                      ->addSelect('ud')
-                      ->addSelect('o')
-                      ->leftJoin('u.userData', 'ud')
-                      ->leftJoin('u.organization', 'o')
-                      ->andWhere('u.id != :id')
-                      ->setParameter('id', $this->getUser()->getId())
-                      ->getQuery()
-                      ->getResult();
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+
+        $qb = $this->getDoctrine()
+                   ->getRepository(User::class)
+                   ->createQueryBuilder('u')
+                   ->addSelect('ud')
+                   ->addSelect('o')
+                   ->leftJoin('u.userData', 'ud')
+                   ->leftJoin('u.organization', 'o')
+                   ->andWhere('u.id != :id')
+                   ->setParameter('id', $this->getUser()->getId());
+
+        $users = $paginator->paginate($qb->getQuery(), $page, $limit);
 
         $response = [];
 
         foreach ($users as $index => $user) {
             $item = $this->transformUserToArray($user);
             $item['index'] = $index + 1;
-            $response[] = $item;
+            $response['data'][] = $item;
         }
+
+        $response['count'] = $users->getTotalItemCount();
 
         return $this->json($response);
     }

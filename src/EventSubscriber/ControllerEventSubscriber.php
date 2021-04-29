@@ -37,7 +37,9 @@ class ControllerEventSubscriber implements EventSubscriberInterface
 
         $requestLog = new RequestLog();
 
-        $content = is_string($request->getContent()) ? json_decode($request->getContent(), true) : [];
+        $content = is_string($request->getContent()) ? json_decode($request->getContent(), true) : null;
+        $query = !empty($request->query->all()) ? $request->query->all() : null;
+        $req = !empty($request->request->all()) ? $request->request->all() : null;
         /** @var User $user */
         $user = $this->security->getUser();
 
@@ -45,6 +47,8 @@ class ControllerEventSubscriber implements EventSubscriberInterface
             $requestLog->setMoment(new \DateTime())
                        ->setMethod($request->getMethod())
                        ->setContent($content)
+                       ->setRequest($req)
+                       ->setQuery($query)
                        ->setUsr($user)
                        ->setPath($request->get('_route'));
         } catch (\Throwable $e) {

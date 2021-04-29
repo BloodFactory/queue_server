@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Service;
 use Exception;
+use Knp\Component\Pager\PaginatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,21 +20,33 @@ class ServiceController extends AbstractController
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
      * @IsGranted("ROLE_ADMIN")
+     * @param Request $request
+     * @param PaginatorInterface $paginator
      * @return Response
      */
-    public function fetchList(): Response
+    public function fetchList(Request $request, PaginatorInterface $paginator): Response
     {
-        $services = $this->getDoctrine()->getRepository(Service::class)->findAll();
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 10);
+
+        $qb = $this->getDoctrine()
+                   ->getRepository(Service::class)
+                   ->createQueryBuilder('service')
+                   ->addOrderBy('service.name');
+
+        $services = $paginator->paginate($qb->getQuery(), $page, $limit);
 
         $response = [];
 
         foreach ($services as $index => $service) {
-            $response[] = [
+            $response['data'][] = [
                 'id' => $service->getId(),
                 'index' => $index + 1,
                 'name' => $service->getName()
             ];
         }
+
+        $response['count'] = $services->getTotalItemCount();
 
         return $this->json($response);
     }

@@ -45,6 +45,16 @@ class RequestLog
      */
     private ?string $path;
 
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     */
+    private ?array $query;
+
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     */
+    private ?array $request;
+
     public function getId(): ?string
     {
         return $this->id;
@@ -106,6 +116,30 @@ class RequestLog
     public function setPath(string $path): self
     {
         $this->path = $path;
+
+        return $this;
+    }
+
+    public function getQuery(): ?array
+    {
+        return $this->query;
+    }
+
+    public function setQuery(?array $query): self
+    {
+        $this->query = $query;
+
+        return $this;
+    }
+
+    public function getRequest(): ?array
+    {
+        return $this->request;
+    }
+
+    public function setRequest(?array $request): self
+    {
+        $this->request = $request;
 
         return $this;
     }
