@@ -21,11 +21,14 @@ class InitController extends AbstractController
         $_user = $this->getUser();
 
         $user = [
-            'username' => $_user->getUsername(),
-            'lastName' => $_user->getUserData()->getLastName(),
-            'firstName' => $_user->getUserData()->getFirstName(),
-            'middleName' => $_user->getUserData()->getMiddleName(),
+            'username' => $_user->getUsername()
         ];
+
+        if ($userData = $_user->getUserData()) {
+            $user['lastName'] = $_user->getUserData()->getLastName();
+            $user['firstName'] = $_user->getUserData()->getFirstName();
+            $user['middleName'] = $_user->getUserData()->getMiddleName();
+        }
 
         if ($organization = $_user->getOrganization()) {
             $user['organization'] = [
