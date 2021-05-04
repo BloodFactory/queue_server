@@ -16,3 +16,6 @@
 /public/web.config
 
 /.idea
+
+composer.lock
+symfony.lock
