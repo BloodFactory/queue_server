@@ -10,8 +10,11 @@ use DateInterval;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Exception;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Swift_Mailer;
+use Swift_Message;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -132,10 +135,12 @@ class RequestController extends AbstractController
     /**
      * @Route("", methods={"POST"}, name="registrate")
      * @param Request $request
+     * @param Swift_Mailer $mailer
      * @return Response
-     * @throws Exception
+     * @throws NonUniqueResultException
+     * @throws NoResultException
      */
-    public function reg(Request $request): Response
+    public function reg(Request $request, Swift_Mailer $mailer): Response
     {
         $data = json_decode($request->getContent(), true);
 
@@ -174,7 +179,7 @@ class RequestController extends AbstractController
                                 ->getResult();
 
         if ($userRegistrations) {
-            $d = $userRegistrations[0]->getAppointment()->getDate()->format('d.m.Y') . ' ' . $qb[0]->getTime()->format('H:i');
+            $d = $userRegistrations[0]->getAppointment()->getDate()->format('d.m.Y') . ' ' . $userRegistrations[0]->getTime()->format('H:i');
             return new Response("Вы уже записаны на ${d}", Response::HTTP_CONFLICT);
         }
 
@@ -216,6 +221,34 @@ class RequestController extends AbstractController
 
         $em->persist($registration);
         $em->flush();
+
+        if (!empty($data['email'])) {
+            $message = (new Swift_Message('Hello Email'))
+                ->setFrom('noreplay@marinet.ru')
+                ->setTo($data['email'])
+                ->setBody(
+                    $this->renderView(
+                        'mail/success_registration.html.twig',
+                        [
+                            'fio' => implode(' ', [
+                                $data['lastName'],
+                                $data['firstName'],
+                                empty($data['middleName']) ? '' : $data['middleName']
+                            ]),
+                            'birthday' => $data['birthday'],
+                            'organization' => $appointment->getOrganizationService()->getOrganization()->getName(),
+                            'service' => $appointment->getOrganizationService()->getService()->getName(),
+                            'date' => $data['date'],
+                            'time' => $data['time']
+                        ]
+                    ),
+                    'text/html'
+                );
+
+            if (!$mailer->send($message)) {
+                return new Response();
+            }
+        }
 
         return new Response();
     }
