@@ -51,6 +51,11 @@ class User implements UserInterface
      */
     private ?UserData $userData;
 
+    /**
+     * @ORM\OneToOne(targetEntity=UserSettings::class, mappedBy="usr", cascade={"persist", "remove"})
+     */
+    private $userSettings;
+
     public function __construct()
     {
         $this->userData = null;
@@ -169,6 +174,23 @@ class User implements UserInterface
         }
 
         $this->userData = $userData;
+
+        return $this;
+    }
+
+    public function getUserSettings(): ?UserSettings
+    {
+        return $this->userSettings;
+    }
+
+    public function setUserSettings(UserSettings $userSettings): self
+    {
+        // set the owning side of the relation if necessary
+        if ($userSettings->getUsr() !== $this) {
+            $userSettings->setUsr($this);
+        }
+
+        $this->userSettings = $userSettings;
 
         return $this;
     }

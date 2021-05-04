@@ -152,29 +152,29 @@ class RequestController extends AbstractController
                             ->getQuery()
                             ->getOneOrNullResult();
 
-        $userRegistrations = $this->getDoctrine()
-                                  ->getRepository(Registration::class)
-                                  ->createQueryBuilder('registration')
-                                  ->addSelect('appointment')
-                                  ->leftJoin('registration.appointment', 'appointment')
-                                  ->andWhere('appointment.date >= :date')
-                                  ->andWhere('registration.lastName = :lastName')
-                                  ->andWhere('registration.firstName = :firstName')
-                                  ->andWhere('registration.birthday = :birthday')
-                                  ->setParameter('date', new DateTime($data['date']))
-                                  ->setParameter('lastName', $data['lastName'])
-                                  ->setParameter('firstName', $data['firstName'])
-                                  ->setParameter('birthday', new DateTime($data['birthday']));
+        $qb = $this->getDoctrine()
+                   ->getRepository(Registration::class)
+                   ->createQueryBuilder('registration')
+                   ->addSelect('appointment')
+                   ->leftJoin('registration.appointment', 'appointment')
+                   ->andWhere('appointment.date >= :date')
+                   ->andWhere('registration.lastName = :lastName')
+                   ->andWhere('registration.firstName = :firstName')
+                   ->andWhere('registration.birthday = :birthday')
+                   ->setParameter('date', new DateTime($data['date']))
+                   ->setParameter('lastName', $data['lastName'])
+                   ->setParameter('firstName', $data['firstName'])
+                   ->setParameter('birthday', new DateTime($data['birthday']));
 
         if (!empty($data['middleName'])) {
-            $userRegistrations->andWhere('registration.middleName = :firstName')->setParameter('middleName', $data['middleName']);
+            $qb->andWhere('registration.middleName = :middleName')->setParameter('middleName', $data['middleName']);
         }
 
-        $userRegistrations = $userRegistrations->getQuery()
-                                               ->getResult();
+        $userRegistrations = $qb->getQuery()
+                                ->getResult();
 
         if ($userRegistrations) {
-            $d = $userRegistrations[0]->getAppointment()->getDate()->format('d.m.Y') . ' ' . $userRegistrations[0]->getTime()->format('H:i');
+            $d = $userRegistrations[0]->getAppointment()->getDate()->format('d.m.Y') . ' ' . $qb[0]->getTime()->format('H:i');
             return new Response("Вы уже записаны на ${d}", Response::HTTP_CONFLICT);
         }
 

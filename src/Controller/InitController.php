@@ -17,29 +17,33 @@ class InitController extends AbstractController
      */
     public function init(): Response
     {
-        /** @var User $_user */
-        $_user = $this->getUser();
-
-        $user = [
-            'username' => $_user->getUsername()
+        $result = [
+            'ability' => $this->getAbilities()
         ];
 
-        if ($userData = $_user->getUserData()) {
-            $user['lastName'] = $_user->getUserData()->getLastName();
-            $user['firstName'] = $_user->getUserData()->getFirstName();
-            $user['middleName'] = $_user->getUserData()->getMiddleName();
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $result['user']['username'] = $user->getUsername();
+
+        if ($userData = $user->getUserData()) {
+            $result['user']['lastName'] = $userData->getLastName();
+            $result['user']['firstName'] = $userData->getFirstName();
+            $result['user']['middleName'] = $userData->getMiddleName();
         }
 
-        if ($organization = $_user->getOrganization()) {
-            $user['organization'] = [
+        if ($organization = $user->getOrganization()) {
+            $result['user']['organization'] = [
                 'id' => $organization->getId(),
                 'name' => $organization->getName()
             ];
         }
-        return $this->json([
-            'user' => $user,
-            'ability' => $this->getAbilities()
-        ]);
+
+        if ($settings = $user->getUserSettings()) {
+            $result['settings']['darkMode'] = $settings->getDarkMode();
+        }
+
+        return $this->json($result);
     }
 
     private function getAbilities(): array
