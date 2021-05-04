@@ -223,7 +223,7 @@ class RequestController extends AbstractController
         $em->flush();
 
         if (!empty($data['email'])) {
-            $message = (new Swift_Message('Hello Email'))
+            $message = (new Swift_Message('Подтверждение заявки на приём'))
                 ->setFrom('noreplay@marinet.ru')
                 ->setTo($data['email'])
                 ->setBody(
