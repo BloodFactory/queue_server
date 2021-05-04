@@ -17,5 +17,5 @@
 
 /.idea
 
-composer.lock
-symfony.lock
+/composer.lock
+/symfony.lock
