@@ -9,6 +9,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=OrganizationRepository::class)
+ * @ORM\Table(indexes={
+ *     @ORM\Index(columns={"parent_id"})
+ * })
  */
 class Organization
 {
@@ -34,9 +37,20 @@ class Organization
      */
     private ?int $timezone = 3;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Organization::class, inversedBy="branches")
+     */
+    private ?Organization $parent;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Organization::class, mappedBy="parent")
+     */
+    private Collection $branches;
+
     public function __construct()
     {
         $this->organizationServices = new ArrayCollection();
+        $this->branches = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -94,6 +108,48 @@ class Organization
     public function setTimezone(int $timezone): self
     {
         $this->timezone = $timezone;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|self[]
+     */
+    public function getBranches(): Collection
+    {
+        return $this->branches;
+    }
+
+    public function addBranch(self $branch): self
+    {
+        if (!$this->branches->contains($branch)) {
+            $this->branches[] = $branch;
+            $branch->setParent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBranch(self $branch): self
+    {
+        if ($this->branches->removeElement($branch)) {
+            // set the owning side to null (unless already changed)
+            if ($branch->getParent() === $this) {
+                $branch->setParent(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
+
+    public function setParent(?self $parent): self
+    {
+        $this->parent = $parent;
 
         return $this;
     }

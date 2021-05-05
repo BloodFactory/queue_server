@@ -19,7 +19,12 @@ class DictionaryController extends AbstractController
      */
     public function fetchOrganizations(): Response
     {
-        $organizations = $this->getDoctrine()->getRepository(Organization::class)->findAll();
+        $organizations = $this->getDoctrine()
+                              ->getRepository(Organization::class)
+                              ->createQueryBuilder('organization')
+                              ->andWhere('organization.parent IS NULL')
+                              ->getQuery()
+                              ->getResult();
 
         $response = [];
 

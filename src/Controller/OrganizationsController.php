@@ -30,12 +30,19 @@ class OrganizationsController extends AbstractController
         $qb = $this->getDoctrine()
                    ->getRepository(Organization::class)
                    ->createQueryBuilder('organization')
+                   ->addSelect('branches')
+                   ->leftJoin('organization.branches', 'branches')
+                   ->andWhere('organization.parent IS NULL')
                    ->addOrderBy('organization.name');
 
         $organizations = $paginator->paginate($qb->getQuery(), $page, $limit);
 
         $response = [];
 
+        /**
+         * @var int $index
+         * @var Organization $organization
+         */
         foreach ($organizations as $index => $organization) {
             $timezone = $organization->getTimezone();
 
@@ -43,12 +50,31 @@ class OrganizationsController extends AbstractController
                 $timezone = ($timezone > 0 ? '+' : '-') . $timezone;
             }
 
-            $response['data'][] = [
+            $org = [
                 'id' => $organization->getId(),
                 'index' => ($index + 1) + ($page - 1) * $limit,
                 'name' => $organization->getName(),
                 'timezone' => $timezone
             ];
+
+            foreach ($organization->getBranches() as $ind => $branch) {
+                $timezone = $branch->getTimezone();
+
+                if ($timezone !== 0) {
+                    $timezone = ($timezone > 0 ? '+' : '-') . $timezone;
+                }
+
+                $br = [
+                    'id' => $branch->getId(),
+                    'index' => ($ind + 1),
+                    'name' => $branch->getName(),
+                    'timezone' => $timezone
+                ];
+
+                $org['branches'][] = $br;
+            }
+
+            $response['data'][] = $org;
         }
 
         $response['count'] = $organizations->getTotalItemCount();
@@ -69,11 +95,20 @@ class OrganizationsController extends AbstractController
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json([
+        $response = [
             'id' => $organization->getId(),
             'name' => $organization->getName(),
             'timezone' => $organization->getTimezone()
-        ]);
+        ];
+
+        if ($parent = $organization->getParent()) {
+            $response['parent'] = [
+                'value' => $parent->getId(),
+                'label' => $parent->getName()
+            ];
+        }
+
+        return $this->json($response);
     }
 
     /**
@@ -102,13 +137,23 @@ class OrganizationsController extends AbstractController
 
         if (empty($data['name'])) throw new Exception('Укажите название организации');
         if (empty($data['timezone'])) throw new Exception('Укажите часовой пояс');
-        if (!is_int($data['timezone'])) throw new Exception('Часовой пояс должен быть числом в диапазоне от -12 до +12');
+        if (!is_int($data['timezone'])) throw new Exception('Разница в часах относительно МСК должно быть целым числом');
 
         if (null !== $id) {
             $organization = $this->getDoctrine()->getRepository(Organization::class)->find($id);
             if (!$organization) return new Response('', Response::HTTP_NOT_FOUND);
         } else {
             $organization = new Organization();
+        }
+
+        if (!empty($data['parent'])) {
+            $parent = $this->getDoctrine()->getRepository(Organization::class)->find($data['parent']);
+
+            if (!$parent) {
+                return new Response('', Response::HTTP_BAD_REQUEST);
+            }
+
+            $organization->setParent($parent);
         }
 
         $organization->setName($data['name'])
