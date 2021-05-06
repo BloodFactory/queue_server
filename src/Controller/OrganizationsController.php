@@ -18,24 +18,19 @@ class OrganizationsController extends AbstractController
 {
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
-     * @param Request $request
-     * @param PaginatorInterface $paginator
      * @return Response
      */
-    public function fetchList(Request $request, PaginatorInterface $paginator): Response
+    public function fetchList(): Response
     {
-        $page = $request->query->getInt('page', 1);
-        $limit = $request->query->getInt('limit', 10);
-
-        $qb = $this->getDoctrine()
-                   ->getRepository(Organization::class)
-                   ->createQueryBuilder('organization')
-                   ->addSelect('branches')
-                   ->leftJoin('organization.branches', 'branches')
-                   ->andWhere('organization.parent IS NULL')
-                   ->addOrderBy('organization.name');
-
-        $organizations = $paginator->paginate($qb->getQuery(), $page, $limit);
+        $organizations = $this->getDoctrine()
+                              ->getRepository(Organization::class)
+                              ->createQueryBuilder('organization')
+                              ->addSelect('branches')
+                              ->leftJoin('organization.branches', 'branches')
+                              ->andWhere('organization.parent IS NULL')
+                              ->addOrderBy('organization.name')
+                              ->getQuery()
+                              ->getResult();
 
         $response = [];
 
@@ -52,7 +47,7 @@ class OrganizationsController extends AbstractController
 
             $org = [
                 'id' => $organization->getId(),
-                'index' => ($index + 1) + ($page - 1) * $limit,
+                'index' => $index + 1,
                 'name' => $organization->getName(),
                 'timezone' => $timezone
             ];
@@ -74,10 +69,8 @@ class OrganizationsController extends AbstractController
                 $org['branches'][] = $br;
             }
 
-            $response['data'][] = $org;
+            $response[] = $org;
         }
-
-        $response['count'] = $organizations->getTotalItemCount();
 
         return $this->json($response);
     }
