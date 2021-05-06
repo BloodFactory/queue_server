@@ -71,17 +71,28 @@ class UsersController extends AbstractController
         $organization = [];
 
         if ($user->getOrganization()) {
-            $organization = [
-                'value' => $user->getOrganization()->getId(),
-                'label' => $user->getOrganization()->getName()
-            ];
+            if ($user->getOrganization()->getParent()) {
+                $organization = [
+                    'value' => $user->getOrganization()->getParent()->getId(),
+                    'label' => $user->getOrganization()->getParent()->getName(),
+                    'branches' => [
+                        'value' => $user->getOrganization()->getId(),
+                        'label' => $user->getOrganization()->getName(),
+                    ]
+                ];
+            } else {
+                $organization = [
+                    'value' => $user->getOrganization()->getId(),
+                    'label' => $user->getOrganization()->getName()
+                ];
+            }
         }
 
         return [
             'id' => $user->getId(),
             'isActive' => $user->getIsActive(),
             'username' => $user->getUsername(),
-            'organization' => $organization,
+            'organization' => $user->getOrganization()->getId(),
             'userData' => $userData ? [
                 'lastName' => $userData->getLastName() ?? '',
                 'firstName' => $userData->getFirstName() ?? '',

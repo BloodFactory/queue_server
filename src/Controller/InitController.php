@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Organization;
 use App\Entity\User;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -42,6 +43,8 @@ class InitController extends AbstractController
         if ($settings = $user->getUserSettings()) {
             $result['settings']['darkMode'] = $settings->getDarkMode();
         }
+
+        $result['dictionaries'] = $this->getDictionaries();
 
         return $this->json($result);
     }
@@ -134,5 +137,49 @@ class InitController extends AbstractController
                 'subject' => $toggle
             ]
         ];
+    }
+
+    private function getDictionaries(): array
+    {
+        return [
+            'organizations' => $this->getOrganizations()
+        ];
+    }
+
+    private function getOrganizations(): array
+    {
+        $organizations = $this->getDoctrine()
+                              ->getRepository(Organization::class)
+                              ->createQueryBuilder('organization')
+                              ->addSelect('branches')
+                              ->leftJoin('organization.branches', 'branches')
+                              ->andWhere('organization.parent IS NULL')
+                              ->getQuery()
+                              ->getResult();
+
+        $result = [];
+
+        /** @var Organization $organization */
+        foreach ($organizations as $organization) {
+            $id = $organization->getId();
+
+            $_organization = [
+                'id' => $id,
+                'name' => $organization->getName()
+            ];
+
+            foreach ($organization->getBranches() as $branch) {
+                $branchID = $branch->getId();
+
+                $_organization['branches'][] = [
+                    'id' => $branchID,
+                    'name' => $branch->getName()
+                ];
+            }
+
+            $result[] = $_organization;
+        }
+
+        return $result;
     }
 }
