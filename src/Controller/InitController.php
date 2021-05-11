@@ -96,6 +96,10 @@ class InitController extends AbstractController
                 'Services'
             ]);
 
+            $delete = array_merge($delete, [
+                'Services'
+            ]);
+
             $toggle = array_merge($toggle, [
                 'Users',
                 'Services'

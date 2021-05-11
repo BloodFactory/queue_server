@@ -28,11 +28,19 @@ class ServiceController extends AbstractController
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 10);
+        $filter = $request->query->get('filter', '');
+
+        if (!$limit) $limit = null;
 
         $qb = $this->getDoctrine()
                    ->getRepository(Service::class)
                    ->createQueryBuilder('service')
                    ->addOrderBy('service.name');
+
+        if ($filter) {
+            $qb->andWhere('service.name LIKE :filter')
+               ->setParameter('filter', "%${filter}%");
+        }
 
         $services = $paginator->paginate($qb->getQuery(), $page, $limit);
 

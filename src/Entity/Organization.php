@@ -47,10 +47,16 @@ class Organization
      */
     private Collection $branches;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Department::class, mappedBy="organization", orphanRemoval=true)
+     */
+    private Collection $departments;
+
     public function __construct()
     {
         $this->organizationServices = new ArrayCollection();
         $this->branches = new ArrayCollection();
+        $this->departments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -150,6 +156,36 @@ class Organization
     public function setParent(?self $parent): self
     {
         $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Department[]
+     */
+    public function getDepartments(): Collection
+    {
+        return $this->departments;
+    }
+
+    public function addDepartment(Department $department): self
+    {
+        if (!$this->departments->contains($department)) {
+            $this->departments[] = $department;
+            $department->setOrganization($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDepartment(Department $department): self
+    {
+        if ($this->departments->removeElement($department)) {
+            // set the owning side to null (unless already changed)
+            if ($department->getOrganization() === $this) {
+                $department->setOrganization(null);
+            }
+        }
 
         return $this;
     }
