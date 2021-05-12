@@ -3,8 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Organization;
+use App\Service\Dictionary\Service as ServiceDictionary;
 use Exception;
-use Knp\Component\Pager\PaginatorInterface;
+use Psr\Cache\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,6 +17,13 @@ use Throwable;
  */
 class OrganizationsController extends AbstractController
 {
+    private ServiceDictionary $dictionary;
+
+    public function __construct(ServiceDictionary $dictionary)
+    {
+        $this->dictionary = $dictionary;
+    }
+
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
      * @return Response
@@ -108,6 +116,7 @@ class OrganizationsController extends AbstractController
      * @Route("", methods={"POST"}, name="add")
      * @param Request $request
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function add(Request $request): Response
     {
@@ -123,6 +132,7 @@ class OrganizationsController extends AbstractController
      * @param int|null $id
      * @return Response
      * @throws Exception
+     * @throws InvalidArgumentException
      */
     private function save(Request $request, ?int $id = null): Response
     {
@@ -161,6 +171,8 @@ class OrganizationsController extends AbstractController
 
         $response->setStatusCode($id ? Response::HTTP_OK : Response::HTTP_CREATED);
 
+        $this->dictionary->clear();
+
         return $response;
     }
 
@@ -169,6 +181,7 @@ class OrganizationsController extends AbstractController
      * @param int $id
      * @param Request $request
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function update(int $id, Request $request): Response
     {
@@ -183,6 +196,7 @@ class OrganizationsController extends AbstractController
      * @Route("/{id}", methods={"DELETE"}, name="delete")
      * @param int $id
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function delete(int $id): Response
     {
@@ -196,6 +210,10 @@ class OrganizationsController extends AbstractController
         $em->remove($organization);
         $em->flush();
 
+        $this->dictionary->clear();
+
         return new Response();
     }
+
+
 }

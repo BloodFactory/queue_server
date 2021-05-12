@@ -22,6 +22,12 @@ class Service
      */
     private ?string $name;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=ServiceGroup::class, inversedBy="services")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private ?ServiceGroup $serviceGroup;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -35,6 +41,18 @@ class Service
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getServiceGroup(): ?ServiceGroup
+    {
+        return $this->serviceGroup;
+    }
+
+    public function setServiceGroup(?ServiceGroup $serviceGroup): self
+    {
+        $this->serviceGroup = $serviceGroup;
 
         return $this;
     }

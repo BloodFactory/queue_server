@@ -81,28 +81,28 @@ class InitController extends AbstractController
                 'AdminHomepage',
                 'Users',
                 'Organizations',
-                'Services'
+                'Services',
             ]);
 
             $add = array_merge($add, [
                 'Users',
                 'Organizations',
-                'Services'
+                'Services',
             ]);
 
             $update = array_merge($update, [
                 'Users',
                 'Organizations',
-                'Services'
+                'Services',
             ]);
 
             $delete = array_merge($delete, [
-                'Services'
+                'Services',
             ]);
 
             $toggle = array_merge($toggle, [
                 'Users',
-                'Services'
+                'Services',
             ]);
         }
 

@@ -3,8 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Service;
+use App\Entity\ServiceGroup;
 use Exception;
-use Knp\Component\Pager\PaginatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,54 +14,45 @@ use Throwable;
 
 /**
  * @Route("/services", name="services_")
+ * @IsGranted("ROLE_ADMIN")
  */
 class ServiceController extends AbstractController
 {
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
-     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param PaginatorInterface $paginator
      * @return Response
      */
-    public function fetchList(Request $request, PaginatorInterface $paginator): Response
+    public function fetchList(Request $request): Response
     {
-        $page = $request->query->getInt('page', 1);
-        $limit = $request->query->getInt('limit', 10);
-        $filter = $request->query->get('filter', '');
-
-        if (!$limit) $limit = null;
+        $servicesGroupID = $request->query->getInt('servicesGroupID', 0);
 
         $qb = $this->getDoctrine()
                    ->getRepository(Service::class)
-                   ->createQueryBuilder('service')
-                   ->addOrderBy('service.name');
+                   ->createQueryBuilder('service');
 
-        if ($filter) {
-            $qb->andWhere('service.name LIKE :filter')
-               ->setParameter('filter', "%${filter}%");
+        if ($servicesGroupID) {
+            $qb->andWhere('service.serviceGroup = :serviceGroup')
+               ->setParameter('serviceGroup', $servicesGroupID);
         }
 
-        $services = $paginator->paginate($qb->getQuery(), $page, $limit);
+        $services = $qb->getQuery()->getResult();
 
-        $response = [];
+        $result = [];
 
         foreach ($services as $index => $service) {
-            $response['data'][] = [
+            $result[] = [
                 'id' => $service->getId(),
                 'index' => $index + 1,
                 'name' => $service->getName()
             ];
         }
 
-        $response['count'] = $services->getTotalItemCount();
-
-        return $this->json($response);
+        return $this->json($result);
     }
 
     /**
      * @Route("/{id}", methods={"GET"}, name="fetch")
-     * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @return Response
      */
@@ -81,7 +72,6 @@ class ServiceController extends AbstractController
 
     /**
      * @Route("", methods={"POST"}, name="add")
-     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
      */
@@ -102,9 +92,13 @@ class ServiceController extends AbstractController
      */
     private function save(Request $request, ?int $id = null): Response
     {
-        $data = json_decode($request->getContent(), true);
+        $servicesGroupID = $request->request->getInt('servicesGroupID', 0);
+        $name = $request->get('name');
 
-        if (empty($data['name'])) throw new Exception('Укажите название услуги');
+        if (empty($servicesGroupID)) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($name)) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+
+        $servicesGroup = $this->getDoctrine()->getRepository(ServiceGroup::class)->find($servicesGroupID);
 
         if (null !== $id) {
             $service = $this->getDoctrine()->getRepository(Service::class)->find($id);
@@ -113,23 +107,18 @@ class ServiceController extends AbstractController
             $service = new Service();
         }
 
-        $service->setName($data['name']);
+        $service->setServiceGroup($servicesGroup)->setName($name);
 
         $em = $this->getDoctrine()->getManager();
 
         $em->persist($service);
         $em->flush();
 
-        $response = new Response();
-
-        $response->setStatusCode($id ? Response::HTTP_OK : Response::HTTP_CREATED);
-
-        return $response;
+        return new Response();
     }
 
     /**
      * @Route("/{id}", methods={"POST"}, name="update")
-     * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @param Request $request
      * @return Response
@@ -145,7 +134,7 @@ class ServiceController extends AbstractController
 
     /**
      * @Route("/{id}", methods={"DELETE"}, name="delete")
-     * @IsGranted("ROLE_ADMIN")
+     * @IsGranted("ROLE_SUPER_ADMIN")
      * @param int $id
      * @return Response
      */
