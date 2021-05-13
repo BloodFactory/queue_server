@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Service;
-use App\Entity\ServiceGroup;
+use App\Entity\ServicesGroup;
 use Exception;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,27 +25,47 @@ class ServiceController extends AbstractController
      */
     public function fetchList(Request $request): Response
     {
-        $servicesGroupID = $request->query->getInt('servicesGroupID', 0);
+        $filter = $request->query->get('filter', '');
 
         $qb = $this->getDoctrine()
-                   ->getRepository(Service::class)
-                   ->createQueryBuilder('service');
+                   ->getRepository(ServicesGroup::class)
+                   ->createQueryBuilder('services_group')
+                   ->addSelect('services');
 
-        if ($servicesGroupID) {
-            $qb->andWhere('service.serviceGroup = :serviceGroup')
-               ->setParameter('serviceGroup', $servicesGroupID);
+
+        if ($filter) {
+            $qb->leftJoin('services_group.services', 'services', 'WITH', 'services.name LIKE :filter')
+               ->orWhere('services_group.name like :filter')
+               ->orWhere('services.name LIKE :filter')
+               ->setParameter('filter', "%${filter}%");
+        } else {
+            $qb->leftJoin('services_group.services', 'services',);
         }
 
-        $services = $qb->getQuery()->getResult();
+        $servicesGroups = $qb->getQuery()->getResult();
 
         $result = [];
 
-        foreach ($services as $index => $service) {
-            $result[] = [
-                'id' => $service->getId(),
-                'index' => $index + 1,
-                'name' => $service->getName()
+        foreach ($servicesGroups as $servicesGroupIndex => $servicesGroup) {
+            $item = [
+                'id' => $servicesGroup->getId(),
+                'index' => $servicesGroupIndex + 1,
+                'name' => $servicesGroup->getName()
             ];
+
+            $services = [];
+
+            foreach ($servicesGroup->getServices() as $serviceIndex => $service) {
+                $services[] = [
+                    'id' => $service->getId(),
+                    'index' => $serviceIndex + 1,
+                    'name' => $service->getName()
+                ];
+            }
+
+            $item['services'] = $services;
+
+            $result[] = $item;
         }
 
         return $this->json($result);
@@ -98,7 +118,7 @@ class ServiceController extends AbstractController
         if (empty($servicesGroupID)) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         if (empty($name)) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
 
-        $servicesGroup = $this->getDoctrine()->getRepository(ServiceGroup::class)->find($servicesGroupID);
+        $servicesGroup = $this->getDoctrine()->getRepository(ServicesGroup::class)->find($servicesGroupID);
 
         if (null !== $id) {
             $service = $this->getDoctrine()->getRepository(Service::class)->find($id);

@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20210512084036 extends AbstractMigration
+final class Version20210513071623 extends AbstractMigration
 {
     public function getDescription() : string
     {
@@ -48,9 +48,10 @@ final class Version20210512084036 extends AbstractMigration
         $this->addSql('EXEC sp_addextendedproperty N\'MS_Description\', N\'(DC2Type:array)\', N\'SCHEMA\', \'log\', N\'TABLE\', \'request_log\', N\'COLUMN\', query');
         $this->addSql('EXEC sp_addextendedproperty N\'MS_Description\', N\'(DC2Type:array)\', N\'SCHEMA\', \'log\', N\'TABLE\', \'request_log\', N\'COLUMN\', request');
         $this->addSql('CREATE TABLE service (id INT IDENTITY NOT NULL, service_group_id INT NOT NULL, name NVARCHAR(4000) NOT NULL, PRIMARY KEY (id))');
-        $this->addSql('CREATE UNIQUE INDEX UNIQ_E19D9AD25E237E06 ON service (name) WHERE name IS NOT NULL');
         $this->addSql('CREATE INDEX IDX_E19D9AD2722827A ON service (service_group_id)');
-        $this->addSql('CREATE TABLE service_group (id INT IDENTITY NOT NULL, name NVARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_E19D9AD2722827A5E237E06 ON service (service_group_id, name) WHERE service_group_id IS NOT NULL AND name IS NOT NULL');
+        $this->addSql('CREATE TABLE services_group (id INT IDENTITY NOT NULL, name NVARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_D122FE875E237E06 ON services_group (name) WHERE name IS NOT NULL');
         $this->addSql('CREATE TABLE user_data (id INT IDENTITY NOT NULL, user_id INT NOT NULL, last_name NVARCHAR(50) NOT NULL, first_name NVARCHAR(50) NOT NULL, middle_name NVARCHAR(50), PRIMARY KEY (id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_D772BFAAA76ED395 ON user_data (user_id) WHERE user_id IS NOT NULL');
         $this->addSql('CREATE TABLE user_settings (id INT IDENTITY NOT NULL, usr_id INT NOT NULL, dark_mode BIT NOT NULL, PRIMARY KEY (id))');
@@ -69,7 +70,7 @@ final class Version20210512084036 extends AbstractMigration
         $this->addSql('ALTER TABLE organization_service ADD CONSTRAINT FK_2C4F1291ED5CA9E6 FOREIGN KEY (service_id) REFERENCES service (id)');
         $this->addSql('ALTER TABLE registration ADD CONSTRAINT FK_62A8A7A7E5B533F9 FOREIGN KEY (appointment_id) REFERENCES appointment (id)');
         $this->addSql('ALTER TABLE log.request_log ADD CONSTRAINT FK_A14398BAC69D3FB FOREIGN KEY (usr_id) REFERENCES usr (id)');
-        $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD2722827A FOREIGN KEY (service_group_id) REFERENCES service_group (id)');
+        $this->addSql('ALTER TABLE service ADD CONSTRAINT FK_E19D9AD2722827A FOREIGN KEY (service_group_id) REFERENCES services_group (id)');
         $this->addSql('ALTER TABLE user_data ADD CONSTRAINT FK_D772BFAAA76ED395 FOREIGN KEY (user_id) REFERENCES usr (id)');
         $this->addSql('ALTER TABLE user_settings ADD CONSTRAINT FK_5C844C5C69D3FB FOREIGN KEY (usr_id) REFERENCES usr (id)');
         $this->addSql('ALTER TABLE usr ADD CONSTRAINT FK_1762498C32C8A3DE FOREIGN KEY (organization_id) REFERENCES organization (id)');
@@ -109,7 +110,7 @@ final class Version20210512084036 extends AbstractMigration
         $this->addSql('DROP TABLE registration');
         $this->addSql('DROP TABLE log.request_log');
         $this->addSql('DROP TABLE service');
-        $this->addSql('DROP TABLE service_group');
+        $this->addSql('DROP TABLE services_group');
         $this->addSql('DROP TABLE user_data');
         $this->addSql('DROP TABLE user_settings');
         $this->addSql('DROP TABLE usr');
