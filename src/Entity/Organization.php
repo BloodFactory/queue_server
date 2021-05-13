@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity(repositoryClass=OrganizationRepository::class)
  * @ORM\Table(indexes={
  *     @ORM\Index(columns={"parent_id"})
- * })
+ * }, uniqueConstraints={@ORM\UniqueConstraint(columns={"parent_id", "name"})})
  */
 class Organization
 {
@@ -23,7 +23,7 @@ class Organization
     private ?int $id;
 
     /**
-     * @ORM\Column(type="string", length=4000, unique=true)
+     * @ORM\Column(type="string", length=4000)
      */
     private ?string $name;
 

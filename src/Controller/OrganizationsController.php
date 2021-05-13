@@ -43,70 +43,31 @@ class OrganizationsController extends AbstractController
         $response = [];
 
         /**
-         * @var int $index
+         * @var int $organizationIndex
          * @var Organization $organization
          */
-        foreach ($organizations as $index => $organization) {
-            $timezone = $organization->getTimezone();
-
-            if ($timezone !== 0) {
-                $timezone = ($timezone > 0 ? '+' : '-') . $timezone;
-            }
-
+        foreach ($organizations as $organizationIndex => $organization) {
             $org = [
                 'id' => $organization->getId(),
-                'index' => $index + 1,
+                'index' => $organizationIndex + 1,
                 'name' => $organization->getName(),
-                'timezone' => $timezone
+                'timezone' => $organization->getTimezone()
             ];
 
-            foreach ($organization->getBranches() as $ind => $branch) {
-                $timezone = $branch->getTimezone();
+            $branches = [];
 
-                if ($timezone !== 0) {
-                    $timezone = ($timezone > 0 ? '+' : '-') . $timezone;
-                }
-
-                $br = [
+            foreach ($organization->getBranches() as $branchIndex => $branch) {
+                $branches[] = [
                     'id' => $branch->getId(),
-                    'index' => ($ind + 1),
+                    'index' => $branchIndex + 1,
                     'name' => $branch->getName(),
-                    'timezone' => $timezone
+                    'timezone' => $branch->getTimezone()
                 ];
-
-                $org['branches'][] = $br;
             }
 
+            $org['branches'] = $branches;
+
             $response[] = $org;
-        }
-
-        return $this->json($response);
-    }
-
-    /**
-     * @Route("/{id}", methods={"GET"}, name="fetch")
-     * @param int $id
-     * @return Response
-     */
-    public function fetch(int $id): Response
-    {
-        $organization = $this->getDoctrine()->getRepository(Organization::class)->find($id);
-
-        if (!$organization) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
-
-        $response = [
-            'id' => $organization->getId(),
-            'name' => $organization->getName(),
-            'timezone' => $organization->getTimezone()
-        ];
-
-        if ($parent = $organization->getParent()) {
-            $response['parent'] = [
-                'value' => $parent->getId(),
-                'label' => $parent->getName()
-            ];
         }
 
         return $this->json($response);
@@ -136,11 +97,13 @@ class OrganizationsController extends AbstractController
      */
     private function save(Request $request, ?int $id = null): Response
     {
-        $data = json_decode($request->getContent(), true);
+        $name = $request->request->get('name');
+        $timezone = $request->request->getInt('timezone');
+        $parentID = $request->request->getInt('parent', 0);
 
-        if (empty($data['name'])) throw new Exception('Укажите название организации');
-        if (empty($data['timezone'])) throw new Exception('Укажите часовой пояс');
-        if (!is_int($data['timezone'])) throw new Exception('Разница в часах относительно МСК должно быть целым числом');
+        if (empty($name)) throw new Exception('Укажите название организации');
+        if (empty($timezone)) throw new Exception('Укажите часовой пояс');
+        if (!is_int($timezone)) throw new Exception('Разница в часах относительно МСК должно быть целым числом');
 
         if (null !== $id) {
             $organization = $this->getDoctrine()->getRepository(Organization::class)->find($id);
@@ -149,8 +112,8 @@ class OrganizationsController extends AbstractController
             $organization = new Organization();
         }
 
-        if (!empty($data['parent'])) {
-            $parent = $this->getDoctrine()->getRepository(Organization::class)->find($data['parent']);
+        if (!empty($parentID)) {
+            $parent = $this->getDoctrine()->getRepository(Organization::class)->find($parentID);
 
             if (!$parent) {
                 return new Response('', Response::HTTP_BAD_REQUEST);
@@ -159,8 +122,8 @@ class OrganizationsController extends AbstractController
             $organization->setParent($parent);
         }
 
-        $organization->setName($data['name'])
-                     ->setTimezone($data['timezone']);
+        $organization->setName($name)
+                     ->setTimezone($timezone);
 
         $em = $this->getDoctrine()->getManager();
 
@@ -204,6 +167,10 @@ class OrganizationsController extends AbstractController
 
         if (!$organization) {
             return new Response('', Response::HTTP_NOT_FOUND);
+        }
+
+        if ($organization->getBranches()->count() > 0) {
+            return new Response('Нельзя удалить организацию, так как имеются связанные с ней филиалы', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         $em = $this->getDoctrine()->getManager();

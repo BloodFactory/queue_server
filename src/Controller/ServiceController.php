@@ -5,8 +5,10 @@ namespace App\Controller;
 use App\Entity\Service;
 use App\Entity\ServicesGroup;
 use Exception;
+use Psr\Cache\InvalidArgumentException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,6 +20,14 @@ use Throwable;
  */
 class ServiceController extends AbstractController
 {
+    public const DICTIONARY_CACHE_KEY = 'dictionary.services';
+    private AdapterInterface $cache;
+
+    public function __construct(AdapterInterface $cache)
+    {
+        $this->cache = $cache;
+    }
+
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
      * @param Request $request
@@ -31,7 +41,6 @@ class ServiceController extends AbstractController
                    ->getRepository(ServicesGroup::class)
                    ->createQueryBuilder('services_group')
                    ->addSelect('services');
-
 
         if ($filter) {
             $qb->leftJoin('services_group.services', 'services', 'WITH', 'services.name LIKE :filter')
@@ -72,28 +81,10 @@ class ServiceController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", methods={"GET"}, name="fetch")
-     * @param int $id
-     * @return Response
-     */
-    public function fetch(int $id): Response
-    {
-        $service = $this->getDoctrine()->getRepository(Service::class)->find($id);
-
-        if (!$service) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
-
-        return $this->json([
-            'id' => $service->getId(),
-            'name' => $service->getName()
-        ]);
-    }
-
-    /**
      * @Route("", methods={"POST"}, name="add")
      * @param Request $request
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function add(Request $request): Response
     {
@@ -109,6 +100,7 @@ class ServiceController extends AbstractController
      * @param int|null $id
      * @return Response
      * @throws Exception
+     * @throws InvalidArgumentException
      */
     private function save(Request $request, ?int $id = null): Response
     {
@@ -132,9 +124,24 @@ class ServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         $em->persist($service);
-        $em->flush();
+
+        try {
+            $em->flush();
+        } catch (Throwable $e) {
+            return new Response('Неудалсоь выполнить запрос', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $this->clearCache();
 
         return new Response();
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function clearCache(): void
+    {
+        $this->cache->deleteItem(self::DICTIONARY_CACHE_KEY);
     }
 
     /**
@@ -142,6 +149,7 @@ class ServiceController extends AbstractController
      * @param int $id
      * @param Request $request
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function update(int $id, Request $request): Response
     {
@@ -157,6 +165,7 @@ class ServiceController extends AbstractController
      * @IsGranted("ROLE_SUPER_ADMIN")
      * @param int $id
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function delete(int $id): Response
     {
@@ -170,6 +179,46 @@ class ServiceController extends AbstractController
         $em->remove($service);
         $em->flush();
 
+        $this->clearCache();
+
         return new Response();
+    }
+
+    /**
+     * @Route("/dictionary", methods={"GET"}, name="dictionary")
+     * @param AdapterInterface $cache
+     * @return Response
+     * @throws InvalidArgumentException
+     */
+    public function dictionary(AdapterInterface $cache): Response
+    {
+        $item = $cache->getItem(self::DICTIONARY_CACHE_KEY);
+
+        $result = [];
+
+        if (!$item->isHit()) {
+            $servicesGroups = $this->getDoctrine()->getRepository(ServicesGroup::class)->findAll();
+
+            foreach ($servicesGroups as $servicesGroupIndex => $servicesGroup) {
+                $result[$servicesGroupIndex] = [
+                    'value' => $servicesGroup->getId(),
+                    'label' => $servicesGroup->getName()
+                ];
+
+                foreach ($servicesGroup->getServices() as $serviceIndex => $service) {
+                    $result[$servicesGroupIndex]['services'][$serviceIndex] = [
+                        'value' => $service->getId(),
+                        'label' => $service->getName()
+                    ];
+                }
+            }
+
+            $item->set($result);
+            $cache->save($item);
+        } else {
+            $result = $item->get();
+        }
+
+        return $this->json($result);
     }
 }
