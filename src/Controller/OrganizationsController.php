@@ -181,6 +181,4 @@ class OrganizationsController extends AbstractController
 
         return new Response();
     }
-
-
 }

@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Organization;
 use App\Entity\User;
 use App\Entity\UserData;
 use Exception;
@@ -36,8 +35,7 @@ class UsersController extends AbstractController
      */
     public function fetchList(Request $request, PaginatorInterface $paginator): Response
     {
-        $page = $request->query->getInt('page', 1);
-        $limit = $request->query->getInt('limit', 10);
+
 
         $qb = $this->getDoctrine()
                    ->getRepository(User::class)
@@ -49,17 +47,15 @@ class UsersController extends AbstractController
                    ->andWhere('u.id != :id')
                    ->setParameter('id', $this->getUser()->getId());
 
-        $users = $paginator->paginate($qb->getQuery(), $page, $limit);
+        $users = $qb->getQuery()->getResult();
 
         $response = [];
 
         foreach ($users as $index => $user) {
             $item = $this->transformUserToArray($user);
             $item['index'] = $index + 1;
-            $response['data'][] = $item;
+            $response[] = $item;
         }
-
-        $response['count'] = $users->getTotalItemCount();
 
         return $this->json($response);
     }
@@ -68,31 +64,10 @@ class UsersController extends AbstractController
     {
         $userData = $user->getUserData();
 
-        $organization = [];
-
-        if ($user->getOrganization()) {
-            if ($user->getOrganization()->getParent()) {
-                $organization = [
-                    'value' => $user->getOrganization()->getParent()->getId(),
-                    'label' => $user->getOrganization()->getParent()->getName(),
-                    'branches' => [
-                        'value' => $user->getOrganization()->getId(),
-                        'label' => $user->getOrganization()->getName(),
-                    ]
-                ];
-            } else {
-                $organization = [
-                    'value' => $user->getOrganization()->getId(),
-                    'label' => $user->getOrganization()->getName()
-                ];
-            }
-        }
-
         return [
             'id' => $user->getId(),
             'isActive' => $user->getIsActive(),
             'username' => $user->getUsername(),
-            'organization' => $user->getOrganization()->getId(),
             'userData' => $userData ? [
                 'lastName' => $userData->getLastName() ?? '',
                 'firstName' => $userData->getFirstName() ?? '',
@@ -142,48 +117,37 @@ class UsersController extends AbstractController
      */
     private function save(Request $request, ?int $id = null): Response
     {
-        $data = json_decode($request->getContent(), true);
-
-        if (empty($data['username'])) return new Response('Введите имя пользователя', Response::HTTP_BAD_REQUEST);
-        if (empty($data['organization'])) return new Response('Введите организацию', Response::HTTP_BAD_REQUEST);
-        if (empty($data['userData']['lastName'])) return new Response('Введите фамилию', Response::HTTP_BAD_REQUEST);
-        if (empty($data['userData']['firstName'])) return new Response('Введите имя', Response::HTTP_BAD_REQUEST);
-
-        if (null === $id) {
-            if (empty($data['password'])) return new Response('Введите пароль', Response::HTTP_BAD_REQUEST);
-            if (empty($data['confirmPassword'])) return new Response('Введите подтверждение пароля', Response::HTTP_BAD_REQUEST);
-            if ($data['password'] !== $data['confirmPassword']) return new Response('Пароль не совпадает с подтверждением пароля', Response::HTTP_BAD_REQUEST);
-        } else {
-            if (!empty($data['password'])) {
-                if (empty($data['confirmPassword']) || $data['password'] !== $data['confirmPassword']) return new Response('Пароль не совпадает с подтверждением пароля', Response::HTTP_BAD_REQUEST);
+        if ($id) {
+            if (!$user = $this->getDoctrine()->getRepository(User::class)->find($id)) {
+                return new Response('', Response::HTTP_NOT_FOUND);
             }
+        } else {
+            $user = new User();
         }
-
-        $organization = $this->getDoctrine()->getRepository(Organization::class)->find($data['organization']);
-
-        if (null === $organization) return new Response('Указаной организации не существует', Response::HTTP_BAD_REQUEST);
-
-        $user = $id ? $this->getDoctrine()->getRepository(User::class)->find($id) : new User();
 
         if (!$userData = $user->getUserData()) {
             $userData = new UserData();
             $user->setUserData($userData);
         }
 
-        $user->setUsername($data['username'])
-             ->setRoles(['ROLE_CLIENT'])
-             ->setOrganization($organization);
+        if (!$username = $request->request->get('username')) return new Response('Введите имя пользователя', Response::HTTP_BAD_REQUEST);
+        if (!($password = $request->request->get('password')) && !$id) return new Response('Введите пароль', Response::HTTP_BAD_REQUEST);
+        if (!($passwordConfirm = $request->request->get('confirmPassword')) && !$id && $password) return new Response('Введите подтверждение пароля', Response::HTTP_BAD_REQUEST);
+        if ($password && ($password !== $passwordConfirm)) return new Response('Пароль и подтверждение пароля не совпадают', Response::HTTP_BAD_REQUEST);
+        if (!$uData = $request->request->get('userData')) return new Response('Заполните личные данные пользователя', Response::HTTP_BAD_REQUEST);
+        if (!$uData['lastName']) return new Response('Введите фамилию пользователя', Response::HTTP_BAD_REQUEST);
+        if (!$uData['firstName']) return new Response('Введите имя пользователя', Response::HTTP_BAD_REQUEST);
 
-        if (!empty($data['password'])) $user->setPassword($this->passwordEncoder->encodePassword($user, $data['password']));
+        $user->setUsername($username)
+             ->setPassword($this->passwordEncoder->encodePassword($user, $password));
 
-        $userData->setLastName($data['userData']['lastName'])
-                 ->setFirstName($data['userData']['firstName']);
-
-        if (isset($data['userData']['middleName'])) $userData->setMiddleName($data['userData']['middleName']);
+        $userData->setLastName($uData['lastName'])->setFirstName($uData['firstName'])->setMiddleName($uData['middleName'] ?: null);
 
         $em = $this->getDoctrine()->getManager();
-        $em->persist($userData);
+
         $em->persist($user);
+        $em->persist($userData);
+
         $em->flush();
 
         return new Response();
