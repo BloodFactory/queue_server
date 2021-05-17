@@ -40,7 +40,9 @@ class ServiceController extends AbstractController
         $qb = $this->getDoctrine()
                    ->getRepository(ServicesGroup::class)
                    ->createQueryBuilder('services_group')
-                   ->addSelect('services');
+                   ->addSelect('services')
+                   ->addOrderBy('services_group.name')
+                   ->addOrderBy('services.name');
 
         if ($filter) {
             $qb->leftJoin('services_group.services', 'services', 'WITH', 'services.name LIKE :filter')

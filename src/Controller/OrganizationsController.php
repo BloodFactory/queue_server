@@ -39,7 +39,8 @@ class OrganizationsController extends AbstractController
                    ->createQueryBuilder('organization')
                    ->addSelect('branches')
                    ->andWhere('organization.parent IS NULL')
-                   ->addOrderBy('organization.name');
+                   ->addOrderBy('organization.name')
+                   ->addOrderBy('branches.name');
 
         if ($filter) {
             $qb->leftJoin('organization.branches', 'branches', 'WITH', 'branches.name LIKE :filter')
