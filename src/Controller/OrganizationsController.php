@@ -3,10 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Organization;
-use App\Service\Dictionary\Service as ServiceDictionary;
 use Exception;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,11 +17,12 @@ use Throwable;
  */
 class OrganizationsController extends AbstractController
 {
-    private ServiceDictionary $dictionary;
+    private const DICTIONARY_CACHE_KEY = 'dictionary.organizations';
+    private AdapterInterface $cache;
 
-    public function __construct(ServiceDictionary $dictionary)
+    public function __construct(AdapterInterface $cache)
     {
-        $this->dictionary = $dictionary;
+        $this->cache = $cache;
     }
 
     /**
@@ -134,9 +135,17 @@ class OrganizationsController extends AbstractController
 
         $response->setStatusCode($id ? Response::HTTP_OK : Response::HTTP_CREATED);
 
-        $this->dictionary->clear();
+        $this->clearCache();
 
         return $response;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function clearCache(): void
+    {
+        $this->cache->deleteItem(self::DICTIONARY_CACHE_KEY);
     }
 
     /**
@@ -177,8 +186,46 @@ class OrganizationsController extends AbstractController
         $em->remove($organization);
         $em->flush();
 
-        $this->dictionary->clear();
+        $this->clearCache();
 
         return new Response();
+    }
+
+    /**
+     * @Route("/dictionary", methods={"GET"}, name="dictionary")
+     * @param AdapterInterface $cache
+     * @return Response
+     * @throws InvalidArgumentException
+     */
+    public function dictionary(AdapterInterface $cache): Response
+    {
+        $item = $cache->getItem(self::DICTIONARY_CACHE_KEY);
+
+        $result = [];
+
+        if (!$item->isHit()) {
+            $organizations = $this->getDoctrine()->getRepository(Organization::class)->findAll();
+
+            foreach ($organizations as $organizationIndex => $organization) {
+                $result[$organizationIndex] = [
+                    'value' => $organization->getId(),
+                    'label' => $organization->getName()
+                ];
+
+                foreach ($organization->getBranches() as $branchIndex => $branch) {
+                    $result[$organizationIndex]['branches'][$branchIndex] = [
+                        'value' => $branch->getId(),
+                        'label' => $branch->getName()
+                    ];
+                }
+            }
+
+            $item->set($result);
+            $cache->save($item);
+        } else {
+            $result = $item->get();
+        }
+
+        return $this->json($result);
     }
 }

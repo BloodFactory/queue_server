@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -42,11 +44,6 @@ class User implements UserInterface
     private bool $isActive = true;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Organization::class)
-     */
-    private ?Organization $organization;
-
-    /**
      * @ORM\OneToOne(targetEntity=UserData::class, mappedBy="user", cascade={"persist", "remove"})
      */
     private ?UserData $userData;
@@ -54,11 +51,17 @@ class User implements UserInterface
     /**
      * @ORM\OneToOne(targetEntity=UserSettings::class, mappedBy="usr", cascade={"persist", "remove"})
      */
-    private $userSettings;
+    private UserSettings $userSettings;
+
+    /**
+     * @ORM\OneToMany(targetEntity=UserRights::class, mappedBy="user", orphanRemoval=true)
+     */
+    private Collection $userRights;
 
     public function __construct()
     {
         $this->userData = null;
+        $this->userRights = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -149,18 +152,6 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getOrganization(): ?Organization
-    {
-        return $this->organization;
-    }
-
-    public function setOrganization(?Organization $organization): self
-    {
-        $this->organization = $organization;
-
-        return $this;
-    }
-
     public function getUserData(): ?UserData
     {
         return $this->userData;
@@ -191,6 +182,36 @@ class User implements UserInterface
         }
 
         $this->userSettings = $userSettings;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|UserRights[]
+     */
+    public function getUserRights(): Collection
+    {
+        return $this->userRights;
+    }
+
+    public function addUserRight(UserRights $userRight): self
+    {
+        if (!$this->userRights->contains($userRight)) {
+            $this->userRights[] = $userRight;
+            $userRight->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserRight(UserRights $userRight): self
+    {
+        if ($this->userRights->removeElement($userRight)) {
+            // set the owning side to null (unless already changed)
+            if ($userRight->getUser() === $this) {
+                $userRight->setUser(null);
+            }
+        }
 
         return $this;
     }

@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\Organization;
 use App\Entity\User;
 use App\Entity\UserData;
+use App\Entity\UserRights;
 use Exception;
 use Knp\Component\Pager\PaginatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
@@ -13,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Throwable;
+use function Doctrine\ORM\QueryBuilder;
 
 /**
  * @Route("/users", name="users")
@@ -35,15 +38,13 @@ class UsersController extends AbstractController
      */
     public function fetchList(Request $request, PaginatorInterface $paginator): Response
     {
-
-
         $qb = $this->getDoctrine()
                    ->getRepository(User::class)
                    ->createQueryBuilder('u')
                    ->addSelect('ud')
-                   ->addSelect('o')
+                   ->addSelect('ur')
                    ->leftJoin('u.userData', 'ud')
-                   ->leftJoin('u.organization', 'o')
+                   ->leftJoin('u.userRights', 'ur')
                    ->andWhere('u.id != :id')
                    ->setParameter('id', $this->getUser()->getId());
 
@@ -63,6 +64,15 @@ class UsersController extends AbstractController
     private function transformUserToArray(User $user): array
     {
         $userData = $user->getUserData();
+        $rights = [];
+
+        foreach ($user->getUserRights() as $userRights) {
+            $rights[$userRights->getOrganization()->getId()] = [
+                'view' => $userRights->getView(),
+                'edit' => $userRights->getEdit(),
+                'delete' => $userRights->getDelete(),
+            ];
+        }
 
         return [
             'id' => $user->getId(),
@@ -72,7 +82,8 @@ class UsersController extends AbstractController
                 'lastName' => $userData->getLastName() ?? '',
                 'firstName' => $userData->getFirstName() ?? '',
                 'middleName' => $userData->getMiddleName() ?? '',
-            ] : []
+            ] : [],
+            'rights' => $rights
         ];
     }
 
@@ -169,20 +180,72 @@ class UsersController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/toggle", methods={"POST"}, name="toggle")
-     * @IsGranted("ROLE_ADMIN")
+     * @Route("/{id}/rights", methods={"POST"}, name="rights_update")
      * @param int $id
+     * @param Request $request
      * @return Response
      */
-    public function toggle(int $id): Response
+    public function updateRights(int $id, Request $request): Response
     {
-        $user = $this->getDoctrine()->getRepository(User::class)->find($id);
+        if (!$user = $this->getDoctrine()->getRepository(User::class)->find($id)) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
 
-        if (!$user) return new Response('', Response::HTTP_NOT_FOUND);
+        if ($rights = $request->request->get('rights')) {
+            $organizationsID = array_keys($rights);
+            $organizationsID = implode(', ', $organizationsID);
 
-        $user->setIsActive(!$user->getIsActive());
+            $query = $this->getDoctrine()
+                          ->getRepository(Organization::class)
+                          ->createQueryBuilder('organization')
+                          ->andWhere("organization.id IN ($organizationsID)")
+                          ->getQuery();
+
+            $organizations = [];
+            foreach ($query->getResult() as $organization) {
+                $organizations[$organization->getId()] = $organization;
+            }
+
+        } else {
+            $rights = [];
+            $organizations = [];
+        }
 
         $em = $this->getDoctrine()->getManager();
+
+        foreach ($user->getUserRights() as $userRights) {
+            if (!isset($rights[$userRights->getOrganization()->getId()])) {
+                $user->removeUserRight($userRights);
+                $em->remove($userRights);
+            }
+        }
+
+        foreach ($rights as $orgID => $rightsItem) {
+            foreach ($user->getUserRights() as $userRights) {
+                if ($userRights->getOrganization() && $userRights->getOrganization()->getId() === $orgID) {
+                    $userRights->setView($rightsItem['view'] ?? false);
+                    $userRights->setEdit($rightsItem['edit'] ?? false);
+                    $userRights->setDelete($rightsItem['delete'] ?? false);
+                    $userRights->setOrganization($organizations[$orgID]);
+
+                    $em->persist($userRights);
+
+                    continue 2;
+                }
+            }
+
+            $newItem = new UserRights();
+            $newItem->setUser($user)
+                    ->setOrganization($organizations[$orgID])
+                    ->setView($rightsItem['view'] ?? false)
+                    ->setEdit($rightsItem['edit'] ?? false)
+                    ->setDelete($rightsItem['delete'] ?? false);
+
+            $user->addUserRight($newItem);
+
+            $em->persist($newItem);
+        }
+
         $em->persist($user);
         $em->flush();
 

@@ -33,13 +33,6 @@ class InitController extends AbstractController
             $result['user']['middleName'] = $userData->getMiddleName();
         }
 
-        if ($organization = $user->getOrganization()) {
-            $result['user']['organization'] = [
-                'id' => $organization->getId(),
-                'name' => $organization->getName()
-            ];
-        }
-
         if ($settings = $user->getUserSettings()) {
             $result['settings']['darkMode'] = $settings->getDarkMode();
         }
