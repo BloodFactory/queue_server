@@ -27,19 +27,30 @@ class OrganizationsController extends AbstractController
 
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
+     * @param Request $request
      * @return Response
      */
-    public function fetchList(): Response
+    public function fetchList(Request $request): Response
     {
-        $organizations = $this->getDoctrine()
-                              ->getRepository(Organization::class)
-                              ->createQueryBuilder('organization')
-                              ->addSelect('branches')
-                              ->leftJoin('organization.branches', 'branches')
-                              ->andWhere('organization.parent IS NULL')
-                              ->addOrderBy('organization.name')
-                              ->getQuery()
-                              ->getResult();
+        $filter = $request->query->get('filter', '');
+
+        $qb = $this->getDoctrine()
+                   ->getRepository(Organization::class)
+                   ->createQueryBuilder('organization')
+                   ->addSelect('branches')
+                   ->andWhere('organization.parent IS NULL')
+                   ->addOrderBy('organization.name');
+
+        if ($filter) {
+            $qb->leftJoin('organization.branches', 'branches', 'WITH', 'branches.name LIKE :filter')
+               ->andWhere('organization.name LIKE :filter')
+               ->orWhere('branches.name LIKE :filter')
+               ->setParameter('filter', "%${filter}%");
+        } else {
+            $qb->leftJoin('organization.branches', 'branches');
+        }
+
+        $organizations = $qb->getQuery()->getResult();
 
         $response = [];
 
