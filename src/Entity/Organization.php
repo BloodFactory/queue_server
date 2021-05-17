@@ -52,11 +52,17 @@ class Organization
      */
     private Collection $departments;
 
+    /**
+     * @ORM\OneToMany(targetEntity=UserRights::class, mappedBy="user", orphanRemoval=true)
+     */
+    private Collection $userRights;
+
     public function __construct()
     {
         $this->organizationServices = new ArrayCollection();
         $this->branches = new ArrayCollection();
         $this->departments = new ArrayCollection();
+        $this->userRights = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -184,6 +190,36 @@ class Organization
             // set the owning side to null (unless already changed)
             if ($department->getOrganization() === $this) {
                 $department->setOrganization(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|UserRights[]
+     */
+    public function getUserRights(): Collection
+    {
+        return $this->userRights;
+    }
+
+    public function addUserRight(UserRights $userRight): self
+    {
+        if (!$this->userRights->contains($userRight)) {
+            $this->userRights[] = $userRight;
+            $userRight->setOrganization($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserRight(UserRights $userRight): self
+    {
+        if ($this->userRights->removeElement($userRight)) {
+            // set the owning side to null (unless already changed)
+            if ($userRight->getUser() === $this) {
+                $userRight->setUser(null);
             }
         }
 

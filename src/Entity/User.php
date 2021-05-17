@@ -51,7 +51,7 @@ class User implements UserInterface
     /**
      * @ORM\OneToOne(targetEntity=UserSettings::class, mappedBy="usr", cascade={"persist", "remove"})
      */
-    private UserSettings $userSettings;
+    private ?UserSettings $userSettings;
 
     /**
      * @ORM\OneToMany(targetEntity=UserRights::class, mappedBy="user", orphanRemoval=true)
@@ -62,6 +62,7 @@ class User implements UserInterface
     {
         $this->userData = null;
         $this->userRights = new ArrayCollection();
+        $this->userSettings = null;
     }
 
     public function getId(): ?int
