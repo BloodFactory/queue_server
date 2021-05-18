@@ -16,7 +16,6 @@ use Throwable;
 
 /**
  * @Route("/services", name="services_")
- * @IsGranted("ROLE_ADMIN")
  */
 class ServiceController extends AbstractController
 {
@@ -30,6 +29,7 @@ class ServiceController extends AbstractController
 
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
      */
@@ -84,6 +84,7 @@ class ServiceController extends AbstractController
 
     /**
      * @Route("", methods={"POST"}, name="add")
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
      * @throws InvalidArgumentException
@@ -148,6 +149,7 @@ class ServiceController extends AbstractController
 
     /**
      * @Route("/{id}", methods={"POST"}, name="update")
+     * @IsGranted("ROLE_ADMIN")
      * @param int $id
      * @param Request $request
      * @return Response

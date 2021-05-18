@@ -150,9 +150,12 @@ class UsersController extends AbstractController
         if (!$uData['firstName']) return new Response('Введите имя пользователя', Response::HTTP_BAD_REQUEST);
 
         $user->setUsername($username)
-             ->setPassword($this->passwordEncoder->encodePassword($user, $password));
+             ->setPassword($this->passwordEncoder->encodePassword($user, $password))
+        ->setRoles(['ROLE_CLIENT']);
 
-        $userData->setLastName($uData['lastName'])->setFirstName($uData['firstName'])->setMiddleName($uData['middleName'] ?: null);
+        $userData->setLastName($uData['lastName'])
+                 ->setFirstName($uData['firstName'])
+                 ->setMiddleName($uData['middleName'] ?: null);
 
         $em = $this->getDoctrine()->getManager();
 

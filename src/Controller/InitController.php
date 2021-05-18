@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Organization;
 use App\Entity\User;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -35,6 +34,19 @@ class InitController extends AbstractController
 
         if ($settings = $user->getUserSettings()) {
             $result['settings']['darkMode'] = $settings->getDarkMode();
+        }
+
+        if ($user->getUserRights()->count() > 0) {
+            $rights = [];
+            foreach ($user->getUserRights() as $userRights) {
+                $rights[$userRights->getOrganization()->getId()] = [
+                    'view' => $userRights->getView(),
+                    'edit' => $userRights->getEdit(),
+                    'delete' => $userRights->getDelete()
+                ];
+            }
+
+            $result['rights'] = $rights;
         }
 
         return $this->json($result);

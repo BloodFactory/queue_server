@@ -216,7 +216,14 @@ class OrganizationsController extends AbstractController
         $result = [];
 
         if (!$item->isHit()) {
-            $organizations = $this->getDoctrine()->getRepository(Organization::class)->findAll();
+            $organizations = $this->getDoctrine()
+                                  ->getRepository(Organization::class)
+                                  ->createQueryBuilder('organization')
+                                  ->addSelect('branches')
+                                  ->leftJoin('organization.branches', 'branches')
+                                  ->andWhere('organization.parent IS NULL')
+                                  ->getQuery()
+                                  ->getResult();
 
             foreach ($organizations as $organizationIndex => $organization) {
                 $result[$organizationIndex] = [
