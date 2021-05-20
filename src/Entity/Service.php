@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=ServiceRepository::class)
- * @ORM\Table(uniqueConstraints={@ORM\UniqueConstraint(columns={"service_group_id", "name"})})
  */
 class Service
 {
@@ -23,11 +22,6 @@ class Service
      */
     private ?string $name;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=ServicesGroup::class, inversedBy="services")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private ?ServicesGroup $serviceGroup;
 
     public function getId(): ?int
     {
@@ -42,18 +36,6 @@ class Service
     public function setName(string $name): self
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    public function getServiceGroup(): ?ServicesGroup
-    {
-        return $this->serviceGroup;
-    }
-
-    public function setServiceGroup(?ServicesGroup $serviceGroup): self
-    {
-        $this->serviceGroup = $serviceGroup;
 
         return $this;
     }
