@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Service;
-use App\Entity\ServicesGroup;
 use Psr\Cache\InvalidArgumentException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -33,9 +32,55 @@ class ServiceController extends AbstractController
      */
     public function fetchList(Request $request): Response
     {
-        $result = [];
+        $tmp = [];
 
-        return $this->json($result);
+        $services = $this->getDoctrine()
+                         ->getRepository(Service::class)
+                         ->createQueryBuilder('s')
+                         ->addSelect('p')
+                         ->leftJoin('s.parent', 'p')
+                         ->getQuery()
+                         ->getArrayResult();
+
+        foreach ($services as $service) {
+            $service['parent'] = $service['parent'] ? $service['parent']['id'] : null;
+            $tmp[$service['id']] = $service;
+        }
+
+        $services = $tmp;
+        $children = [];
+
+        foreach ($services as $serviceIndex => $service) {
+            if ($service['parent']) {
+                $parent = $service['parent'];
+                unset($service['parent']);
+                $children[$parent][$service['id']] = $service;
+                unset($services[$serviceIndex]);
+            }
+        }
+
+        $test = function ($services) use ($children, &$test) {
+            $result = [];
+
+            $i = 1;
+            foreach ($services as $serviceIndex => $service) {
+                $service['index'] = $i;
+
+                if (isset($children[$service['id']])) {
+                    $service['children'] = $test($children[$service['id']]);
+                }
+
+                $result[] = $service;
+
+                $i++;
+            }
+
+            return $result;
+        };
+
+        $services = $test($services);
+
+        return $this->json($services);
     }
 
     /**
@@ -43,10 +88,39 @@ class ServiceController extends AbstractController
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function add(Request $request): Response
     {
+        if (!$name = $request->request->get('name')) {
+            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        }
+
+        $service = new Service();
+        $service->setName($name);
+
+        if ($parentId = $request->request->getInt('parent')) {
+            if (!$parent = $this->getDoctrine()->getRepository(Service::class)->find($parentId)) {
+                return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+            }
+
+            $service->setParent($parent);
+        }
+
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($service);
+        $em->flush();
+
+        $this->clearCache();
         return new Response();
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function clearCache(): void
+    {
+        $this->cache->deleteItem(self::DICTIONARY_CACHE_KEY);
     }
 
     /**
@@ -83,14 +157,6 @@ class ServiceController extends AbstractController
         $this->clearCache();
 
         return new Response();
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     */
-    private function clearCache(): void
-    {
-        $this->cache->deleteItem(self::DICTIONARY_CACHE_KEY);
     }
 
     /**
