@@ -59,7 +59,7 @@ class ServiceController extends AbstractController
             }
         }
 
-        $test = function ($services) use ($children, &$test) {
+        $recursiveParser = function ($services) use ($children, &$recursiveParser) {
             $result = [];
 
             $i = 1;
@@ -67,7 +67,7 @@ class ServiceController extends AbstractController
                 $service['index'] = $i;
 
                 if (isset($children[$service['id']])) {
-                    $service['children'] = $test($children[$service['id']]);
+                    $service['children'] = $recursiveParser($children[$service['id']]);
                 }
 
                 $result[] = $service;
@@ -78,7 +78,7 @@ class ServiceController extends AbstractController
             return $result;
         };
 
-        $services = $test($services);
+        $services = $recursiveParser($services);
 
         return $this->json($services);
     }
@@ -129,9 +129,22 @@ class ServiceController extends AbstractController
      * @param int $id
      * @param Request $request
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function update(int $id, Request $request): Response
     {
+        if (!$name = $request->request->get('name')) {
+            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$service = $this->getDoctrine()->getRepository(Service::class)->find($id)) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+        $service->setName($name);
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($service);
+        $em->flush();
+        $this->clearCache();
         return new Response();
     }
 
