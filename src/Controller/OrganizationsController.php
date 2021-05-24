@@ -115,7 +115,6 @@ class OrganizationsController extends AbstractController
         $parentID = $request->request->getInt('parent', 0);
 
         if (empty($name)) throw new Exception('Укажите название организации');
-        if (empty($timezone)) throw new Exception('Укажите часовой пояс');
         if (!is_int($timezone)) throw new Exception('Разница в часах относительно МСК должно быть целым числом');
 
         if (null !== $id) {
