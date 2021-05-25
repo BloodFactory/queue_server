@@ -151,7 +151,7 @@ class UsersController extends AbstractController
 
         $user->setUsername($username)
              ->setPassword($this->passwordEncoder->encodePassword($user, $password))
-        ->setRoles(['ROLE_CLIENT']);
+             ->setRoles(['ROLE_CLIENT']);
 
         $userData->setLastName($uData['lastName'])
                  ->setFirstName($uData['firstName'])

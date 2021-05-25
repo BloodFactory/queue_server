@@ -63,21 +63,26 @@ class InitController extends AbstractController
         if ($this->isGranted('ROLE_CLIENT')) {
             $open = array_merge($open, [
                 'ClientHomepage',
-                'Settings'
+                'Settings',
+                'Appointments'
             ]);
             $add = array_merge($add, [
                 'Settings',
+                'Appointments'
             ]);
             $update = array_merge($update, [
                 'Settings',
+                'Appointments'
             ]);
 
             $toggle = array_merge($toggle, [
                 'Settings',
+                'Appointments'
             ]);
 
             $delete = array_merge($delete, [
-                'Settings'
+                'Settings',
+                'Appointments'
             ]);
         }
 
