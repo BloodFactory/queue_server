@@ -36,12 +36,12 @@ class RequestController extends AbstractController
         $organizations = $this->getDoctrine()
                               ->getRepository(Organization::class)
                               ->createQueryBuilder('organization')
-                              ->addSelect('organizationServices')
                               ->addSelect('appointments')
                               ->addSelect('registrations')
-                              ->innerJoin('organization.organizationServices', 'organizationServices')
-                              ->innerJoin('organizationServices.appointments', 'appointments')
+                              ->addSelect('service')
+                              ->innerJoin('organization.appointments', 'appointments')
                               ->leftJoin('appointments.registrations', 'registrations')
+                              ->leftJoin('appointments.service', 'service')
                               ->andWhere('appointments.date >= :date')
                               ->setParameter('date', new DateTime())
                               ->getQuery()
@@ -69,58 +69,58 @@ class RequestController extends AbstractController
                 'label' => $organization->getName()
             ];
 
-            /** @var OrganizationService $organizationService */
-            foreach ($organization->getOrganizationServices() as $organizationService) {
+
+            foreach ($organization->getAppointments() as $appointment) {
+                $service = $appointment->getService();
                 $itemService = [
-                    'value' => $organizationService->getId(),
-                    'label' => $organizationService->getService()->getName()
+                    'value' => $service->getId(),
+                    'label' => $service->getName()
                 ];
 
-                /** @var Appointment $appointment */
-                foreach ($organizationService->getAppointments() as $appointment) {
-                    $timeFrom = $appointment->getTimeFrom();
-                    $timeTill = $appointment->getTimeTill();
-                    $duration = $appointment->getDuration();
-                    $needDinner = $appointment->getNeedDinner();
-                    $dinnerFrom = $appointment->getDinnerFrom();
-                    $dinnerTill = $appointment->getDinnerTill();
-                    $persons = $appointment->getPersons();
 
-                    /** @var DateTime $day */
-                    $day = clone $appointment->getDate();
+                $timeFrom = $appointment->getTimeFrom();
+                $timeTill = $appointment->getTimeTill();
+                $duration = $appointment->getDuration();
+                $needDinner = $appointment->getNeedDinner();
+                $dinnerFrom = $appointment->getDinnerFrom();
+                $dinnerTill = $appointment->getDinnerTill();
+                $persons = $appointment->getPersons();
 
-                    $time = clone $timeFrom;
+                /** @var DateTime $day */
+                $day = clone $appointment->getDate();
 
-                    $itemAppointment = [
-                        'id' => $appointment->getId(),
-                        'date' => $appointment->getDate()->format('d.m.Y'),
-                        'duration' => $duration,
-                        'persons' => $persons
+                $time = clone $timeFrom;
+
+                $itemAppointment = [
+                    'id' => $appointment->getId(),
+                    'date' => $appointment->getDate()->format('d.m.Y'),
+                    'duration' => $duration,
+                    'persons' => $persons
+                ];
+
+                $registrationTimes = [];
+
+                foreach ($appointment->getRegistrations() as $registration) {
+                    $registrationTime = $registration->getTime()->format('H:i');
+                    $registrationTimes[$registrationTime] = empty($registrationTimes[$registrationTime]) ? 1 : $registrationTimes[$registrationTime] + 1;
+                }
+
+                do {
+                    if ($needDinner && $time >= $dinnerFrom && $time < $dinnerTill) continue;
+
+                    $day->setTime((int)$time->format('H'), (int)$time->format('i'));
+                    $timeStr = $time->format('H:i');
+
+                    $itemTime = [
+                        'value' => $timeStr,
+                        'free' => ($day > $now) && (empty($registrationTimes[$timeStr]) || $registrationTimes[$timeStr] < $persons)
                     ];
 
-                    $registrationTimes = [];
+                    $itemAppointment['times'][] = $itemTime;
+                } while ($timeTill > $time->add(new DateInterval('PT' . $duration . 'M')));
 
-                    foreach ($appointment->getRegistrations() as $registration) {
-                        $registrationTime = $registration->getTime()->format('H:i');
-                        $registrationTimes[$registrationTime] = empty($registrationTimes[$registrationTime]) ? 1 : $registrationTimes[$registrationTime] + 1;
-                    }
+                $itemService['appointments'][] = $itemAppointment;
 
-                    do {
-                        if ($needDinner && $time >= $dinnerFrom && $time < $dinnerTill) continue;
-
-                        $day->setTime((int)$time->format('H'), (int)$time->format('i'));
-                        $timeStr = $time->format('H:i');
-
-                        $itemTime = [
-                            'value' => $timeStr,
-                            'free' => ($day > $now) && (empty($registrationTimes[$timeStr]) || $registrationTimes[$timeStr] < $persons)
-                        ];
-
-                        $itemAppointment['times'][] = $itemTime;
-                    } while ($timeTill > $time->add(new DateInterval('PT' . $duration . 'M')));
-
-                    $itemService['appointments'][] = $itemAppointment;
-                }
 
                 $itemOrganization['services'][] = $itemService;
             }
