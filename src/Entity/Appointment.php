@@ -10,9 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=AppointmentRepository::class)
- * @ORM\Table(uniqueConstraints={
- *     @ORM\UniqueConstraint(name="organization_service_date_unique_idx", columns={"organization_service_id", "date"})
- * })
+ * @ORM\Table(uniqueConstraints={@ORM\UniqueConstraint(columns={"organization_id", "service_id", "date"})})
  */
 class Appointment
 {
@@ -22,12 +20,6 @@ class Appointment
      * @ORM\Column(type="integer")
      */
     private ?int $id;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=OrganizationService::class, inversedBy="appointments")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private ?OrganizationService $organizationService;
 
     /**
      * @ORM\Column(type="date")
@@ -72,7 +64,19 @@ class Appointment
     /**
      * @ORM\OneToMany(targetEntity=Registration::class, mappedBy="appointment", orphanRemoval=true)
      */
-    private $registrations;
+    private Collection $registrations;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Organization::class, inversedBy="appointments")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private ?Organization $organization;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Service::class, inversedBy="appointments")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private ?Service $service;
 
     public function __construct()
     {
@@ -82,18 +86,6 @@ class Appointment
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getOrganizationService(): ?OrganizationService
-    {
-        return $this->organizationService;
-    }
-
-    public function setOrganizationService(?OrganizationService $organizationService): self
-    {
-        $this->organizationService = $organizationService;
-
-        return $this;
     }
 
     public function getDate(): ?DateTimeInterface
@@ -219,6 +211,30 @@ class Appointment
                 $registration->setAppointment(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): self
+    {
+        $this->organization = $organization;
+
+        return $this;
+    }
+
+    public function getService(): ?Service
+    {
+        return $this->service;
+    }
+
+    public function setService(?Service $service): self
+    {
+        $this->service = $service;
 
         return $this;
     }

@@ -28,11 +28,6 @@ class Organization
     private ?string $name;
 
     /**
-     * @ORM\OneToMany(targetEntity=OrganizationService::class, mappedBy="organization", orphanRemoval=true)
-     */
-    private Collection $organizationServices;
-
-    /**
      * @ORM\Column(type="smallint", options={"default": 3})
      */
     private ?int $timezone = 3;
@@ -48,21 +43,20 @@ class Organization
     private Collection $branches;
 
     /**
-     * @ORM\OneToMany(targetEntity=Department::class, mappedBy="organization", orphanRemoval=true)
-     */
-    private Collection $departments;
-
-    /**
-     * @ORM\OneToMany(targetEntity=UserRights::class, mappedBy="user", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity=UserRights::class, mappedBy="organization", orphanRemoval=true)
      */
     private Collection $userRights;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Appointment::class, mappedBy="organization", orphanRemoval=true)
+     */
+    private Collection $appointments;
+
     public function __construct()
     {
-        $this->organizationServices = new ArrayCollection();
         $this->branches = new ArrayCollection();
-        $this->departments = new ArrayCollection();
         $this->userRights = new ArrayCollection();
+        $this->appointments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -78,36 +72,6 @@ class Organization
     public function setName(string $name): self
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|OrganizationService[]
-     */
-    public function getOrganizationServices(): Collection
-    {
-        return $this->organizationServices;
-    }
-
-    public function addOrganizationService(OrganizationService $organizationService): self
-    {
-        if (!$this->organizationServices->contains($organizationService)) {
-            $this->organizationServices[] = $organizationService;
-            $organizationService->setOrganization($this);
-        }
-
-        return $this;
-    }
-
-    public function removeOrganizationService(OrganizationService $organizationService): self
-    {
-        if ($this->organizationServices->removeElement($organizationService)) {
-            // set the owning side to null (unless already changed)
-            if ($organizationService->getOrganization() === $this) {
-                $organizationService->setOrganization(null);
-            }
-        }
 
         return $this;
     }
@@ -167,36 +131,6 @@ class Organization
     }
 
     /**
-     * @return Collection|Department[]
-     */
-    public function getDepartments(): Collection
-    {
-        return $this->departments;
-    }
-
-    public function addDepartment(Department $department): self
-    {
-        if (!$this->departments->contains($department)) {
-            $this->departments[] = $department;
-            $department->setOrganization($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDepartment(Department $department): self
-    {
-        if ($this->departments->removeElement($department)) {
-            // set the owning side to null (unless already changed)
-            if ($department->getOrganization() === $this) {
-                $department->setOrganization(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection|UserRights[]
      */
     public function getUserRights(): Collection
@@ -220,6 +154,36 @@ class Organization
             // set the owning side to null (unless already changed)
             if ($userRight->getUser() === $this) {
                 $userRight->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Appointment[]
+     */
+    public function getAppointments(): Collection
+    {
+        return $this->appointments;
+    }
+
+    public function addAppointment(Appointment $appointment): self
+    {
+        if (!$this->appointments->contains($appointment)) {
+            $this->appointments[] = $appointment;
+            $appointment->setOrganization($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAppointment(Appointment $appointment): self
+    {
+        if ($this->appointments->removeElement($appointment)) {
+            // set the owning side to null (unless already changed)
+            if ($appointment->getOrganization() === $this) {
+                $appointment->setOrganization(null);
             }
         }
 

@@ -34,9 +34,15 @@ class Service
      */
     private Collection $children;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Appointment::class, mappedBy="service", orphanRemoval=true)
+     */
+    private Collection $appointments;
+
     public function __construct()
     {
         $this->children = new ArrayCollection();
+        $this->appointments = new ArrayCollection();
     }
 
 
@@ -95,6 +101,36 @@ class Service
     public function setParent(?self $parent): self
     {
         $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Appointment[]
+     */
+    public function getAppointments(): Collection
+    {
+        return $this->appointments;
+    }
+
+    public function addAppointment(Appointment $appointment): self
+    {
+        if (!$this->appointments->contains($appointment)) {
+            $this->appointments[] = $appointment;
+            $appointment->setService($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAppointment(Appointment $appointment): self
+    {
+        if ($this->appointments->removeElement($appointment)) {
+            // set the owning side to null (unless already changed)
+            if ($appointment->getService() === $this) {
+                $appointment->setService(null);
+            }
+        }
 
         return $this;
     }

@@ -176,10 +176,72 @@ class ServiceController extends AbstractController
      * @Route("/dictionary", methods={"GET"}, name="dictionary")
      * @param AdapterInterface $cache
      * @return Response
+     * @throws InvalidArgumentException
      */
     public function dictionary(AdapterInterface $cache): Response
     {
-        $result = [];
+        $cacheItem = $cache->getItem(self::DICTIONARY_CACHE_KEY);
+
+        if (!$cacheItem->isHit()) {
+            $tmp = [];
+
+            $services = $this->getDoctrine()
+                             ->getRepository(Service::class)
+                             ->createQueryBuilder('s')
+                             ->addSelect('p')
+                             ->leftJoin('s.parent', 'p')
+                             ->getQuery()
+                             ->getArrayResult();
+
+            foreach ($services as $service) {
+                $service['parent'] = $service['parent'] ? $service['parent']['id'] : null;
+                $tmp[$service['id']] = $service;
+            }
+
+            $services = $tmp;
+            $children = [];
+
+            foreach ($services as $serviceIndex => $service) {
+                if ($service['parent']) {
+                    $parent = $service['parent'];
+                    unset($service['parent']);
+                    $children[$parent][$service['id']] = $service;
+                    unset($services[$serviceIndex]);
+                }
+            }
+
+            $recursiveParser = function ($services) use ($children, &$recursiveParser) {
+                $result = [];
+
+                $i = 1;
+                foreach ($services as $serviceIndex => $service) {
+                    $item = [
+                        'value' => $service['id'],
+                        'label' => $service['name']
+                    ];
+
+                    if (isset($children[$service['id']])) {
+                        $item['children'] = $recursiveParser($children[$service['id']]);
+                        $item['selectable'] = false;
+                    } else {
+                        $item['selectable'] = true;
+                    }
+
+                    $result[] = $item;
+
+                    $i++;
+                }
+
+                return $result;
+            };
+
+            $result = $recursiveParser($services);
+
+            $cacheItem->set($result);
+            $cache->save($cacheItem);
+        } else {
+            $result = $cacheItem->get();
+        }
 
         return $this->json($result);
     }

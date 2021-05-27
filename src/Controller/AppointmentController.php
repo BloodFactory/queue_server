@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Appointment;
+use App\Entity\Organization;
 use App\Entity\OrganizationService;
+use App\Entity\Service;
+use App\Entity\User;
 use DateTime;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,9 +33,10 @@ class AppointmentController extends AbstractController
 
     private function save(Request $request, ?int $id = null): Response
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $request->request->all();
 
-        if (empty($data['organizationService'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['organization'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['service'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         if (empty($data['date'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         if (empty($data['timeFrom'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         if (empty($data['timeTill'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
@@ -55,10 +59,13 @@ class AppointmentController extends AbstractController
             return new Response('', Response::HTTP_BAD_REQUEST);
         }
 
-        if (!$organizationService = $this->getDoctrine()->getRepository(OrganizationService::class)->find($data['organizationService'])) {
+        if (!$organization = $this->getDoctrine()->getRepository(Organization::class)->find($data['organization'])) {
             return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
         }
 
+        if (!$service = $this->getDoctrine()->getRepository(Service::class)->find($data['service'])) {
+            return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        }
 
         if ($id) {
             $appointment = $this->getDoctrine()->getRepository(Appointment::class)->find($id);
@@ -73,7 +80,8 @@ class AppointmentController extends AbstractController
         }
 
         try {
-            $appointment->setOrganizationService($organizationService)
+            $appointment->setOrganization($organization)
+                        ->setService($service)
                         ->setDate($date)
                         ->setTimeFrom($timeFrom)
                         ->setTimeTill($timeTill)
@@ -106,31 +114,70 @@ class AppointmentController extends AbstractController
      */
     public function fetchList(Request $request): Response
     {
-        if (!$organizationService = $request->query->getInt('organizationService', 0)) {
-            return new Response('', Response::HTTP_BAD_REQUEST);
-        }
+        /** @var User $user */
+        $user = $this->getUser();
 
         $appointments = $this->getDoctrine()
                              ->getRepository(Appointment::class)
                              ->createQueryBuilder('appointment')
-                             ->addSelect('registrations')
-                             ->leftJoin('appointment.registrations', 'registrations')
-                             ->andWhere('appointment.organizationService = :organizationService')
-                             ->andWhere('appointment.date >= :date')
-                             ->setParameter('organizationService', $organizationService)
-                             ->setParameter('date', new DateTime())
-                             ->addOrderBy('appointment.date')
-                             ->addOrderBy('registrations.time')
+                             ->addSelect('organization')
+                             ->addSelect('service')
+                             ->leftJoin('appointment.organization', 'organization')
+                             ->leftJoin('appointment.service', 'service')
+                             ->leftJoin('organization.userRights', 'userRights')
+                             ->andWhere('userRights.user = :user')
+                             ->andWhere('userRights.view = :view')
+                             ->setParameter('view', true)
+                             ->setParameter('user', $user->getId())
+                             ->addOrderBy('appointment.date', 'DESC')
                              ->getQuery()
                              ->getResult();
 
         $response = [];
 
+        /** @var Appointment $appointment */
         foreach ($appointments as $appointment) {
-            $response[] = $this->convertDataToArray($appointment);
+            $organization = $appointment->getOrganization();
+            $service = $appointment->getService();
+
+            $response[] = [
+                'id' => $appointment->getId(),
+                'date' => $appointment->getDate()->format('d.m.Y'),
+                'timeFrom' => $appointment->getTimeFrom()->format('H:i'),
+                'timeTill' => $appointment->getTimeTill()->format('H:i'),
+                'needDinner' => $appointment->getNeedDinner(),
+                'dinnerFrom' => $appointment->getDinnerFrom() ? $appointment->getDinnerFrom()->format('H:i') : '',
+                'dinnerTill' => $appointment->getDinnerTill() ? $appointment->getDinnerTill()->format('H:i') : '',
+                'duration' => $appointment->getDuration(),
+                'persons' => $appointment->getPersons(),
+                'organization' => [
+                    'value' => $organization->getId(),
+                    'label' => $organization->getName()
+                ],
+                'service' => [
+                    'value' => $service->getId(),
+                    'label' => $service->getName()
+                ]
+            ];
         }
 
         return $this->json($response);
+    }
+
+    /**
+     * @Route("/{id}", methods={"GET"}, name="fetch")
+     * @param int $id
+     * @return Response
+     */
+    public function fetch(int $id): Response
+    {
+        $appointment = $this->getDoctrine()->getRepository(Appointment::class)->find($id);
+
+        if (!$appointment) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json($this->convertDataToArray($appointment));
     }
 
     private function convertDataToArray(Appointment $appointment): array
@@ -163,22 +210,6 @@ class AppointmentController extends AbstractController
         }
 
         return $result;
-    }
-
-    /**
-     * @Route("/{id}", methods={"GET"}, name="fetch")
-     * @param int $id
-     * @return Response
-     */
-    public function fetch(int $id): Response
-    {
-        $appointment = $this->getDoctrine()->getRepository(Appointment::class)->find($id);
-
-        if (!$appointment) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
-
-        return $this->json($this->convertDataToArray($appointment));
     }
 
     /**
