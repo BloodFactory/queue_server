@@ -52,11 +52,17 @@ class Organization
      */
     private Collection $appointments;
 
+    /**
+     * @ORM\OneToMany(targetEntity=AppointmentTemplate::class, mappedBy="organization", orphanRemoval=true)
+     */
+    private Collection $appointmentTemplates;
+
     public function __construct()
     {
         $this->branches = new ArrayCollection();
         $this->userRights = new ArrayCollection();
         $this->appointments = new ArrayCollection();
+        $this->appointmentTemplates = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -184,6 +190,36 @@ class Organization
             // set the owning side to null (unless already changed)
             if ($appointment->getOrganization() === $this) {
                 $appointment->setOrganization(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|AppointmentTemplate[]
+     */
+    public function getAppointmentTemplates(): Collection
+    {
+        return $this->appointmentTemplates;
+    }
+
+    public function addAppointmentTemplate(AppointmentTemplate $appointmentTemplate): self
+    {
+        if (!$this->appointmentTemplates->contains($appointmentTemplate)) {
+            $this->appointmentTemplates[] = $appointmentTemplate;
+            $appointmentTemplate->setOrganization($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAppointmentTemplate(AppointmentTemplate $appointmentTemplate): self
+    {
+        if ($this->appointmentTemplates->removeElement($appointmentTemplate)) {
+            // set the owning side to null (unless already changed)
+            if ($appointmentTemplate->getOrganization() === $this) {
+                $appointmentTemplate->setOrganization(null);
             }
         }
 

@@ -163,6 +163,10 @@ class ServiceController extends AbstractController
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
+        if ($service->getChildren()->count() > 0) {
+            return new Response('Запись нельзя удалить, так как имеются зависимые от ней записи', Response::HTTP_BAD_REQUEST);
+        }
+
         $em = $this->getDoctrine()->getManager();
         $em->remove($service);
         $em->flush();
@@ -222,9 +226,9 @@ class ServiceController extends AbstractController
 
                     if (isset($children[$service['id']])) {
                         $item['children'] = $recursiveParser($children[$service['id']]);
-                        $item['selectable'] = false;
+                        $item['noTick'] = true;
                     } else {
-                        $item['selectable'] = true;
+                        $item['noTick'] = false;
                     }
 
                     $result[] = $item;
