@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Appointment;
 use App\Entity\Organization;
 use App\Entity\OrganizationService;
+use App\Entity\Registration;
 use App\Entity\Service;
 use App\Entity\User;
 use DateTime;
@@ -117,51 +118,94 @@ class AppointmentController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        $appointments = $this->getDoctrine()
-                             ->getRepository(Appointment::class)
-                             ->createQueryBuilder('appointment')
-                             ->addSelect('organization')
-                             ->addSelect('service')
-                             ->leftJoin('appointment.organization', 'organization')
-                             ->leftJoin('appointment.service', 'service')
-                             ->leftJoin('organization.userRights', 'userRights')
-                             ->andWhere('userRights.user = :user')
-                             ->andWhere('userRights.view = :view')
-                             ->setParameter('view', true)
-                             ->setParameter('user', $user->getId())
-                             ->addOrderBy('appointment.date', 'DESC')
-                             ->getQuery()
-                             ->getResult();
+        $response = $this->getDoctrine()
+                         ->getRepository(Organization::class)
+                         ->createQueryBuilder('o')
+                         ->addSelect('a')
+                         ->addSelect('s')
+                         ->addSelect('r')
+                         ->leftJoin('o.appointments', 'a')
+                         ->leftJoin('a.service', 's')
+                         ->leftJoin('a.registrations', 'r')
+                         ->leftJoin('o.userRights', 'ur')
+                         ->andWhere('ur.user = :user')
+                         ->andWhere('ur.view = 1')
+                         ->andWhere('a.date >= :now')
+                         ->setParameter('user', $user->getId())
+                         ->setParameter('now', new DateTime())
+                         ->getQuery()
+                         ->getResult();
 
-        $response = [];
+        $result = [];
 
-        /** @var Appointment $appointment */
-        foreach ($appointments as $appointment) {
-            $organization = $appointment->getOrganization();
-            $service = $appointment->getService();
-
-            $response[] = [
-                'id' => $appointment->getId(),
-                'date' => $appointment->getDate()->format('d.m.Y'),
-                'timeFrom' => $appointment->getTimeFrom()->format('H:i'),
-                'timeTill' => $appointment->getTimeTill()->format('H:i'),
-                'needDinner' => $appointment->getNeedDinner(),
-                'dinnerFrom' => $appointment->getDinnerFrom() ? $appointment->getDinnerFrom()->format('H:i') : '',
-                'dinnerTill' => $appointment->getDinnerTill() ? $appointment->getDinnerTill()->format('H:i') : '',
-                'duration' => $appointment->getDuration(),
-                'persons' => $appointment->getPersons(),
-                'organization' => [
-                    'value' => $organization->getId(),
-                    'label' => $organization->getName()
-                ],
-                'service' => [
-                    'value' => $service->getId(),
-                    'label' => $service->getName()
-                ]
+        /** @var Organization $org */
+        foreach ($response as $org) {
+            $organization = [
+                'id' => $org->getId(),
+                'name' => $org->getName(),
+                'timezone' => $org->getTimezone()
             ];
+
+            $services = [];
+            $servicesLinks = [];
+
+            /** @var Appointment $app */
+            foreach ($org->getAppointments() as $app) {
+                $serv = $app->getService();
+
+                if (!isset($servicesLinks[$serv->getId()])) {
+                    $service = [
+                        'id' => $serv->getId(),
+                        'name' => $serv->getName()
+                    ];
+
+                    $servicesLinks[$serv->getId()] = &$service;
+                    $services[] = &$service;
+                } else {
+                    $service = $servicesLinks[$serv->getId()];
+                }
+
+                $registrations = [];
+
+                /** @var Registration $reg */
+                foreach ($app->getRegistrations() as $reg) {
+                    $registrations[] = [
+                        'id' => $reg->getId(),
+                        'lastName' => $reg->getLastName(),
+                        'firstName' => $reg->getFirstName(),
+                        'middleName' => $reg->getMiddleName() ?? '',
+                        'birthday' => $reg->getBirthday()->format('d.m.Y'),
+                        'time' => $reg->getTime()->format('H:i'),
+                        'email' => $reg->getEmail(),
+                        'phone' => $reg->getPhone()
+                    ];
+                }
+
+                $appointment = [
+                    'id' => $app->getId(),
+                    'date' => $app->getDate()->format('d.m.Y'),
+                    'timeFrom' => $app->getTimeFrom()->format('H:i'),
+                    'timeTill' => $app->getTimeTill()->format('H:i'),
+                    'needDinner' => $app->getNeedDinner(),
+                    'dinnerFrom' => $app->getDinnerFrom() ? $app->getDinnerFrom()->format('H:i') : '',
+                    'dinnerTill' => $app->getDinnerTill() ? $app->getDinnerTill()->format('H:i') : '',
+                    'duration' => $app->getDuration(),
+                    'persons' => $app->getPersons(),
+                    'registrations' => $registrations
+                ];
+
+                $service['appointments'][] = $appointment;
+
+                unset($service);
+            }
+
+            $organization['services'] = $services;
+
+            $result[] = $organization;
         }
 
-        return $this->json($response);
+
+        return $this->json($result);
     }
 
     /**
@@ -237,7 +281,7 @@ class AppointmentController extends AbstractController
         }
 
         if ($appointment->getRegistrations()->count() > 0) {
-            return new Response('Удаление заявки запрещено, так как имеются записанные кандидаты', Response::HTTP_FORBIDDEN);
+            return new Response('Удаление записи на приём невозможно, так как имеются записанные кандидаты', Response::HTTP_FORBIDDEN);
         }
 
         $em = $this->getDoctrine()->getManager();

@@ -227,8 +227,10 @@ class ServiceController extends AbstractController
                     if (isset($children[$service['id']])) {
                         $item['children'] = $recursiveParser($children[$service['id']]);
                         $item['noTick'] = true;
+                        $item['selectable'] = false;
                     } else {
                         $item['noTick'] = false;
+                        $item['selectable'] = true;
                     }
 
                     $result[] = $item;
