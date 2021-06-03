@@ -139,6 +139,7 @@ class RequestController extends AbstractController
      * @return Response
      * @throws NonUniqueResultException
      * @throws NoResultException
+     * @throws Exception
      */
     public function reg(Request $request, Swift_Mailer $mailer): Response
     {
@@ -150,7 +151,7 @@ class RequestController extends AbstractController
         $appointment = $this->getDoctrine()
                             ->getRepository(Appointment::class)
                             ->createQueryBuilder('appointment')
-                            ->andWhere('appointment.organizationService = :service')
+                            ->andWhere('appointment.service = :service')
                             ->andWhere('appointment.date = :date')
                             ->setParameter('service', $data['service'])
                             ->setParameter('date', new DateTime($data['date']))
@@ -236,8 +237,8 @@ class RequestController extends AbstractController
                                 empty($data['middleName']) ? '' : $data['middleName']
                             ]),
                             'birthday' => $data['birthday'],
-                            'organization' => $appointment->getOrganizationService()->getOrganization()->getName(),
-                            'service' => $appointment->getOrganizationService()->getService()->getName(),
+                            'organization' => $appointment->getOrganization()->getName(),
+                            'service' => $appointment->getService()->getName(),
                             'date' => $data['date'],
                             'time' => $data['time']
                         ]
