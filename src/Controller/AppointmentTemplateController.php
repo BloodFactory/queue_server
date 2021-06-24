@@ -65,7 +65,7 @@ class AppointmentTemplateController extends AbstractController
 
                 $organizations[$organization->getId()] = &$org;
             } else {
-                $org = $organizations[$organization->getId()];
+                $org = &$organizations[$organization->getId()];
             }
 
             $org['templates'][] = [
@@ -82,6 +82,8 @@ class AppointmentTemplateController extends AbstractController
                 'persons' => $template->getPersons(),
                 'duration' => $template->getDuration()
             ];
+
+            unset($org);
         }
 
         return $this->json($result);
@@ -95,7 +97,20 @@ class AppointmentTemplateController extends AbstractController
     {
         $data = $request->request->all();
 
+        if (empty($data['organizations'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['services'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+
         $em = $this->getDoctrine()->getManager();
+
+        if (empty($data['timeFrom'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['timeTill'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['persons'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        if (empty($data['duration'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+
+        if (isset($data['needDinner']) && '1' === $data['needDinner']) {
+            if (empty($data['dinnerFrom'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+            if (empty($data['dinnerTill'])) return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
+        }
 
         foreach ($data['organizations'] as $organization) {
             $org = $this->getDoctrine()->getRepository(Organization::class)->find($organization);

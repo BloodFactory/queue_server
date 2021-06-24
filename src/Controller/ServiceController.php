@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Service;
+use App\Entity\ServiceGroup;
 use Psr\Cache\InvalidArgumentException;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -26,61 +27,48 @@ class ServiceController extends AbstractController
 
     /**
      * @Route("", methods={"GET"}, name="fetch_list")
-     * @IsGranted("ROLE_ADMIN")
-     * @param Request $request
      * @return Response
      */
-    public function fetchList(Request $request): Response
+    public function fetchList(): Response
     {
-        $tmp = [];
+        $data = $this->getDoctrine()
+                     ->getRepository(ServiceGroup::class)
+                     ->createQueryBuilder('sg')
+                     ->addSelect('s')
+                     ->addSelect('p')
+                     ->leftJoin('sg.services', 's')
+                     ->leftJoin('sg.parent', 'p')
+                     ->addOrderBy('sg.name')
+                     ->getQuery()
+                     ->getArrayResult();
+
+        $children = [];
+        foreach ($data as $index => &$item) {
+            $item['children'] = [];
+            if (null !== $item['parent']) {
+                $item['parent'] = $item['parent']['id'];
+            } else {
+                unset($data[$index]['parent']);
+            }
+
+            $children[$item['id']] = &$item;
+        }
+
+        foreach ($data as $index => &$item) {
+            if (isset($item['parent'])) {
+                $children[$item['parent']]['children'][] = $item;
+                array_splice($data, $index, 1);
+            }
+        }
 
         $services = $this->getDoctrine()
                          ->getRepository(Service::class)
                          ->createQueryBuilder('s')
-                         ->addSelect('p')
-                         ->leftJoin('s.parent', 'p')
+                         ->andWhere('s.serviceGroup IS NULL')
                          ->getQuery()
                          ->getArrayResult();
 
-        foreach ($services as $service) {
-            $service['parent'] = $service['parent'] ? $service['parent']['id'] : null;
-            $tmp[$service['id']] = $service;
-        }
-
-        $services = $tmp;
-        $children = [];
-
-        foreach ($services as $serviceIndex => $service) {
-            if ($service['parent']) {
-                $parent = $service['parent'];
-                unset($service['parent']);
-                $children[$parent][$service['id']] = $service;
-                unset($services[$serviceIndex]);
-            }
-        }
-
-        $recursiveParser = function ($services) use ($children, &$recursiveParser) {
-            $result = [];
-
-            $i = 1;
-            foreach ($services as $serviceIndex => $service) {
-                $service['index'] = $i;
-
-                if (isset($children[$service['id']])) {
-                    $service['children'] = $recursiveParser($children[$service['id']]);
-                }
-
-                $result[] = $service;
-
-                $i++;
-            }
-
-            return $result;
-        };
-
-        $services = $recursiveParser($services);
-
-        return $this->json($services);
+        return $this->json(['services' => $services, 'children' => $data]);
     }
 
     /**
@@ -99,12 +87,13 @@ class ServiceController extends AbstractController
         $service = new Service();
         $service->setName($name);
 
-        if ($parentId = $request->request->getInt('parent')) {
-            if (!$parent = $this->getDoctrine()->getRepository(Service::class)->find($parentId)) {
+        if ($serviceGroupId = $request->request->getInt('serviceGroupId')) {
+
+            if (!$serviceGroup = $this->getDoctrine()->getRepository(ServiceGroup::class)->find($serviceGroupId)) {
                 return new Response('Неверный формат запроса', Response::HTTP_BAD_REQUEST);
             }
 
-            $service->setParent($parent);
+            $service->setServiceGroup($serviceGroup);
         }
 
         $em = $this->getDoctrine()->getManager();
@@ -163,10 +152,6 @@ class ServiceController extends AbstractController
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
-        if ($service->getChildren()->count() > 0) {
-            return new Response('Запись нельзя удалить, так как имеются зависимые от ней записи', Response::HTTP_BAD_REQUEST);
-        }
-
         $em = $this->getDoctrine()->getManager();
         $em->remove($service);
         $em->flush();
@@ -174,81 +159,5 @@ class ServiceController extends AbstractController
         $this->clearCache();
 
         return new Response();
-    }
-
-    /**
-     * @Route("/dictionary", methods={"GET"}, name="dictionary")
-     * @param AdapterInterface $cache
-     * @return Response
-     * @throws InvalidArgumentException
-     */
-    public function dictionary(AdapterInterface $cache): Response
-    {
-        $cacheItem = $cache->getItem(self::DICTIONARY_CACHE_KEY);
-
-        if (!$cacheItem->isHit()) {
-            $tmp = [];
-
-            $services = $this->getDoctrine()
-                             ->getRepository(Service::class)
-                             ->createQueryBuilder('s')
-                             ->addSelect('p')
-                             ->leftJoin('s.parent', 'p')
-                             ->getQuery()
-                             ->getArrayResult();
-
-            foreach ($services as $service) {
-                $service['parent'] = $service['parent'] ? $service['parent']['id'] : null;
-                $tmp[$service['id']] = $service;
-            }
-
-            $services = $tmp;
-            $children = [];
-
-            foreach ($services as $serviceIndex => $service) {
-                if ($service['parent']) {
-                    $parent = $service['parent'];
-                    unset($service['parent']);
-                    $children[$parent][$service['id']] = $service;
-                    unset($services[$serviceIndex]);
-                }
-            }
-
-            $recursiveParser = function ($services) use ($children, &$recursiveParser) {
-                $result = [];
-
-                $i = 1;
-                foreach ($services as $serviceIndex => $service) {
-                    $item = [
-                        'value' => $service['id'],
-                        'label' => $service['name']
-                    ];
-
-                    if (isset($children[$service['id']])) {
-                        $item['children'] = $recursiveParser($children[$service['id']]);
-                        $item['noTick'] = true;
-                        $item['selectable'] = false;
-                    } else {
-                        $item['noTick'] = false;
-                        $item['selectable'] = true;
-                    }
-
-                    $result[] = $item;
-
-                    $i++;
-                }
-
-                return $result;
-            };
-
-            $result = $recursiveParser($services);
-
-            $cacheItem->set($result);
-            $cache->save($cacheItem);
-        } else {
-            $result = $cacheItem->get();
-        }
-
-        return $this->json($result);
     }
 }

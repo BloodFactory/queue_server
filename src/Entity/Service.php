@@ -25,16 +25,6 @@ class Service
     private ?string $name;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Service::class, inversedBy="children")
-     */
-    private ?Service $parent;
-
-    /**
-     * @ORM\OneToMany(targetEntity=Service::class, mappedBy="parent")
-     */
-    private Collection $children;
-
-    /**
      * @ORM\OneToMany(targetEntity=Appointment::class, mappedBy="service", orphanRemoval=true)
      */
     private Collection $appointments;
@@ -44,9 +34,13 @@ class Service
      */
     private Collection $appointmentTemplates;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=ServiceGroup::class, inversedBy="services")
+     */
+    private ?ServiceGroup $serviceGroup;
+
     public function __construct()
     {
-        $this->children = new ArrayCollection();
         $this->appointments = new ArrayCollection();
         $this->appointmentTemplates = new ArrayCollection();
     }
@@ -65,48 +59,6 @@ class Service
     public function setName(string $name): self
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|self[]
-     */
-    public function getChildren(): Collection
-    {
-        return $this->children;
-    }
-
-    public function addChild(self $child): self
-    {
-        if (!$this->children->contains($child)) {
-            $this->children[] = $child;
-            $child->setParent($this);
-        }
-
-        return $this;
-    }
-
-    public function removeChild(self $child): self
-    {
-        if ($this->children->removeElement($child)) {
-            // set the owning side to null (unless already changed)
-            if ($child->getParent() === $this) {
-                $child->setParent(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function getParent(): ?self
-    {
-        return $this->parent;
-    }
-
-    public function setParent(?self $parent): self
-    {
-        $this->parent = $parent;
 
         return $this;
     }
@@ -167,6 +119,18 @@ class Service
                 $appointmentTemplate->setService(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getServiceGroup(): ?ServiceGroup
+    {
+        return $this->serviceGroup;
+    }
+
+    public function setServiceGroup(?ServiceGroup $serviceGroup): self
+    {
+        $this->serviceGroup = $serviceGroup;
 
         return $this;
     }

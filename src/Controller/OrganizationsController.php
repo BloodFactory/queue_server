@@ -201,49 +201,4 @@ class OrganizationsController extends AbstractController
 
         return new Response();
     }
-
-    /**
-     * @Route("/dictionary", methods={"GET"}, name="dictionary")
-     * @param AdapterInterface $cache
-     * @return Response
-     * @throws InvalidArgumentException
-     */
-    public function dictionary(AdapterInterface $cache): Response
-    {
-        $item = $cache->getItem(self::DICTIONARY_CACHE_KEY);
-
-        $result = [];
-
-        if (!$item->isHit()) {
-            $organizations = $this->getDoctrine()
-                                  ->getRepository(Organization::class)
-                                  ->createQueryBuilder('organization')
-                                  ->addSelect('branches')
-                                  ->leftJoin('organization.branches', 'branches')
-                                  ->andWhere('organization.parent IS NULL')
-                                  ->getQuery()
-                                  ->getResult();
-
-            foreach ($organizations as $organizationIndex => $organization) {
-                $result[$organizationIndex] = [
-                    'value' => $organization->getId(),
-                    'label' => $organization->getName()
-                ];
-
-                foreach ($organization->getBranches() as $branchIndex => $branch) {
-                    $result[$organizationIndex]['branches'][$branchIndex] = [
-                        'value' => $branch->getId(),
-                        'label' => $branch->getName()
-                    ];
-                }
-            }
-
-            $item->set($result);
-            $cache->save($item);
-        } else {
-            $result = $item->get();
-        }
-
-        return $this->json($result);
-    }
 }
