@@ -258,10 +258,9 @@ class RequestController extends AbstractController
      * @Route("/{id}", methods={"DELETE"}, name="delete")
      * @IsGranted("ROLE_CLIENT")
      * @param int $id
-     * @param Request $request
      * @return Response
      */
-    public function delete(int $id, Request $request): Response
+    public function delete(int $id): Response
     {
         $registration = $this->getDoctrine()->getRepository(Registration::class)->find($id);
 
